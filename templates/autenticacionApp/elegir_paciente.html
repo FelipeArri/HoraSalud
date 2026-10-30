@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}Personas a cargo{% endblock %}
+
+{% block content %}
+<div class="angosto">
+  <h1 class="mb-1">¿Por quién vas a pedir hora?</h1>
+  <p class="texto-suave mb-3">Estas son las personas que tienes a cargo como tutor o cuidador.</p>
+
+  {% if a_cargo %}
+  <form method="post">
+    {% csrf_token %}
+    {% for paciente in a_cargo %}
+      <label class="opcion">
+        <input type="radio" name="paciente" value="{{ paciente.pk }}" {% if forloop.first %}checked{% endif %}>
+        <span class="avatar">{{ paciente.usuario.first_name|first }}</span>
+        <span>
+          <strong class="d-block">{{ paciente.usuario.get_full_name }}</strong>
+          <span class="texto-suave small">{{ paciente.sector.nombre|default:'Sin sector' }}</span>
+        </span>
+      </label>
+    {% endfor %}
+    <button type="submit" class="btn btn-verde btn-lg w-100 mt-2">Continuar</button>
+  </form>
+  {% else %}
+  <div class="tarjeta text-center">
+    <p class="mb-1"><strong>Aún no tienes personas a cargo.</strong></p>
+    <p class="texto-suave mb-0">El vínculo lo autoriza el paciente desde su cuenta, o el SOME en persona.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

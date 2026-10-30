@@ -4,7 +4,9 @@ BloqueHorario y Hora. RF-02, RF-05, RN-01, RN-02.
 """
 import uuid
 
-from django.db import models
+from django.db import models, transaction
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 
 from autenticacionApp.models import Paciente, Profesional
 
@@ -83,8 +85,40 @@ class Hora(models.Model):
         ordering = ['bloque__agenda__fecha', 'bloque__hora_inicio']
 
     def save(self, *args, **kwargs):
+        # Si la hora ya existia, recordar su bloque anterior (puede haberse movido de bloque).
+        bloque_anterior_id = None
+        if not self._state.adding:
+            bloque_anterior_id = Hora.objects.filter(pk=self.pk).values_list('bloque_id', flat=True).first()
+
         self.bloque_activo = None if self.estado == self.Estado.CANCELADA else self.bloque
-        super().save(*args, **kwargs)
+        with transaction.atomic():
+            super().save(*args, **kwargs)
+            sincronizar_estado_bloques({self.bloque_id, bloque_anterior_id})
+        self.bloque.refresh_from_db(fields=['estado'])
 
     def __str__(self):
         return f'{self.paciente} - {self.bloque} - {self.get_estado_display()}'
+
+    @property
+    def codigo_turno(self):
+        """Codigo para la pantalla de sala, sin datos personales (RN-12). Ej.: MG-0820."""
+        nombre = self.bloque.agenda.especialidad.nombre.replace('-', ' ')
+        sigla = ''.join(p[0] for p in nombre.split() if p[0].isupper())[:2] or 'AT'
+        return f'{sigla.upper()}-{self.bloque.hora_inicio:%H%M}'
+
+
+def sincronizar_estado_bloques(bloque_ids):
+    """Defecto DEF-01: el bloque queda 'Reservado' si tiene una hora vigente y
+    'Disponible' si no la tiene. Los bloques 'Bloqueado' no se tocan."""
+    for bloque_id in bloque_ids - {None}:
+        ocupado = Hora.objects.filter(bloque_activo_id=bloque_id).exists()
+        nuevo_estado = BloqueHorario.Estado.RESERVADO if ocupado else BloqueHorario.Estado.DISPONIBLE
+        (BloqueHorario.objects.filter(pk=bloque_id)
+         .exclude(estado=BloqueHorario.Estado.BLOQUEADO)
+         .update(estado=nuevo_estado))
+
+
+@receiver(post_delete, sender=Hora)
+def liberar_bloque_al_borrar_hora(sender, instance, **kwargs):
+    # Si se borra una hora (por ejemplo desde /admin/), su bloque vuelve a quedar libre.
+    sincronizar_estado_bloques({instance.bloque_id})

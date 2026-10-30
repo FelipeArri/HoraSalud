@@ -47,7 +47,7 @@ def rut_ficticio(numero):
 
 
 def proximos_dias_habiles(cantidad):
-    dia, dias = date.today(), []
+    dia, dias = date.today() - timedelta(days=1), []  # incluye hoy si es dia habil
     while len(dias) < cantidad:
         dia += timedelta(days=1)
         if dia.weekday() < 5:
@@ -118,9 +118,7 @@ class Command(BaseCommand):
                 Hora.objects.create(bloque=bloque, paciente=paciente, estado=estado,
                                     motivo_cancelacion='Paciente avisa que no puede asistir'
                                     if estado == Hora.Estado.CANCELADA else '')
-                if estado != Hora.Estado.CANCELADA:
-                    bloque.estado = BloqueHorario.Estado.RESERVADO
-                    bloque.save()
+                # El estado del bloque lo actualiza Hora.save() (DEF-01).
 
         for orden, paciente in enumerate(pacientes[-3:], start=1):
             EsperaPaciente.objects.get_or_create(especialidad=especialidades[0], paciente=paciente,

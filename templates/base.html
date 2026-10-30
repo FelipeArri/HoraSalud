@@ -1,42 +1,85 @@
-{% load static %}
-<!DOCTYPE html>
+{% load static %}<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1f7a3a">
   <title>{% block title %}HoraSalud{% endblock %} · CESFAM Padre Esteban Gumucio</title>
   <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
   <link rel="stylesheet" href="{% static 'css/estilos.css' %}">
 </head>
 <body>
-  <nav class="navbar navbar-expand-md navbar-dark barra-principal">
+  {% with ruta=request.resolver_match.url_name %}
+  <header class="barra">
     <div class="container">
-      <a class="navbar-brand fw-bold" href="{% url 'inicio' %}">HoraSalud</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu"
-              aria-controls="menu" aria-expanded="false" aria-label="Abrir menú">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="menu">
-        <ul class="navbar-nav ms-auto">
-          <li class="nav-item"><a class="nav-link" href="{% url 'inicio' %}">Inicio</a></li>
-        </ul>
-      </div>
+      <a class="marca" href="{% if user.is_authenticated and paciente_activo %}{% url 'mi_inicio' %}{% elif es_some %}{% url 'some_nomina' %}{% else %}{% url 'inicio' %}{% endif %}">
+        <span class="marca-logo">{% include 'componentes/icono.html' with n='corazon' %}</span>
+        <span class="marca-texto"><strong>HoraSalud</strong><small>CESFAM Padre Esteban Gumucio</small></span>
+      </a>
+      <nav class="barra-menu" aria-label="Menú principal">
+        {% if user.is_authenticated %}
+          {% if paciente_activo %}
+            <a href="{% url 'mi_inicio' %}" class="d-none d-md-inline-flex {% if ruta == 'mi_inicio' %}activo{% endif %}">Inicio</a>
+            <a href="{% url 'pedir_especialidad' %}" class="d-none d-md-inline-flex {% if ruta|slice:':5' == 'pedir' %}activo{% endif %}">Pedir hora</a>
+            <a href="{% url 'mis_horas' %}" class="d-none d-md-inline-flex {% if ruta == 'mis_horas' %}activo{% endif %}">Mis horas</a>
+          {% endif %}
+          {% if es_some %}
+            <a href="{% url 'some_nomina' %}" class="d-none d-md-inline-flex {% if ruta == 'some_nomina' %}activo{% endif %}">Nómina</a>
+            <a href="{% url 'sala_espera' %}" class="d-none d-md-inline-flex" target="_blank" rel="noopener">Pantalla sala</a>
+          {% endif %}
+          <span class="chip-usuario ms-1" title="{{ user.get_full_name|default:user.username }}">
+            <span class="avatar">{{ user.first_name|default:user.username|first|upper }}</span>
+            <span class="d-none d-sm-inline">{{ user.first_name|default:user.username }}</span>
+          </span>
+          <form method="post" action="{% url 'salir' %}" class="d-none d-md-block">{% csrf_token %}
+            <button type="submit" title="Cerrar sesión">{% include 'componentes/icono.html' with n='salir' %}<span class="visually-hidden">Salir</span></button>
+          </form>
+        {% else %}
+          <a href="{% url 'ingresar' %}" class="btn btn-verde">Ingresar</a>
+        {% endif %}
+      </nav>
     </div>
-  </nav>
+  </header>
 
-  <main class="container py-4">
-    {% if messages %}
-      {% for message in messages %}
-        <div class="alert alert-{{ message.tags }}" role="alert">{{ message }}</div>
-      {% endfor %}
-    {% endif %}
+  {% if es_tutor and paciente_activo %}
+  <div class="franja-tutor">
+    <div class="container">
+      {% include 'componentes/icono.html' with n='grupo' %}
+      <span>Estás pidiendo horas por <strong>{{ paciente_activo.usuario.get_full_name }}</strong></span>
+      <a href="{% url 'elegir_paciente' %}">Cambiar</a>
+    </div>
+  </div>
+  {% endif %}
+
+  <main class="contenido container">
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} {% block ancho_alertas %}angosto{% endblock %}" role="alert">{{ message }}</div>
+    {% endfor %}
     {% block content %}{% endblock %}
   </main>
 
-  <footer class="text-center text-muted small py-3">
-    Prototipo académico · Solo datos ficticios
-  </footer>
+  <footer class="pie">Prototipo académico · INACAP · Solo datos ficticios</footer>
+
+  {% if user.is_authenticated %}
+  <nav class="menu-inferior" aria-label="Menú del teléfono">
+    {% if paciente_activo %}
+      <a href="{% url 'mi_inicio' %}" class="{% if ruta == 'mi_inicio' %}activo{% endif %}">{% include 'componentes/icono.html' with n='casa' %}Inicio</a>
+      <a href="{% url 'pedir_especialidad' %}" class="{% if ruta|slice:':5' == 'pedir' %}activo{% endif %}">{% include 'componentes/icono.html' with n='calendario' %}Pedir hora</a>
+      <a href="{% url 'mis_horas' %}" class="{% if ruta == 'mis_horas' or ruta == 'cancelar_hora' %}activo{% endif %}">{% include 'componentes/icono.html' with n='lista' %}Mis horas</a>
+    {% elif es_some %}
+      <a href="{% url 'some_nomina' %}" class="activo">{% include 'componentes/icono.html' with n='portapapeles' %}Nómina</a>
+    {% endif %}
+    {% if es_tutor %}
+      <a href="{% url 'elegir_paciente' %}" class="{% if ruta == 'elegir_paciente' %}activo{% endif %}">{% include 'componentes/icono.html' with n='grupo' %}A cargo</a>
+    {% endif %}
+    <form method="post" action="{% url 'salir' %}" class="d-flex flex-fill">{% csrf_token %}
+      <button type="submit">{% include 'componentes/icono.html' with n='salir' %}Salir</button>
+    </form>
+  </nav>
+  {% endif %}
+  {% endwith %}
 
   <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  {% block scripts %}{% endblock %}
 </body>
 </html>

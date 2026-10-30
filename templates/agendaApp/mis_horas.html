@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Mis horas{% endblock %}
+{% block ancho_alertas %}medio{% endblock %}
+
+{% block content %}
+<div class="medio">
+  <div class="d-flex justify-content-between align-items-center mb-3 gap-2 flex-wrap">
+    <h1 class="mb-0">Mis horas</h1>
+    <a href="{% url 'pedir_especialidad' %}" class="btn btn-verde">{% include 'componentes/icono.html' with n='calendario' %} Pedir hora</a>
+  </div>
+
+  <div class="etiqueta-seccion mb-2">Próximas</div>
+  {% for hora in proximas %}
+    <div class="tarjeta">
+      {% include 'agendaApp/_tarjeta_hora.html' %}
+      <div class="d-flex gap-2 mt-3 flex-wrap">
+        {% if hora.estado == 'reservada' %}
+        <form method="post" action="{% url 'confirmar_asistencia' hora.pk %}">{% csrf_token %}
+          <button class="btn btn-verde">Confirmar asistencia</button>
+        </form>
+        {% endif %}
+        <a href="{% url 'cancelar_hora' hora.pk %}" class="btn btn-rojo-borde">Cancelar</a>
+      </div>
+    </div>
+  {% empty %}
+    <div class="tarjeta text-center">
+      <p class="mb-0 texto-suave">No tienes horas próximas.</p>
+    </div>
+  {% endfor %}
+
+  {% if historial %}
+  <div class="etiqueta-seccion mt-4 mb-2">Historial</div>
+  <div class="tarjeta p-0">
+    {% for hora in historial %}
+      <div class="d-flex justify-content-between align-items-center gap-2 px-3 py-3 {% if not forloop.last %}border-bottom{% endif %}">
+        <div>
+          <strong class="d-block">{{ hora.bloque.agenda.especialidad.nombre }}</strong>
+          <span class="texto-suave small">{{ hora.bloque.agenda.fecha|date:"d-m-Y" }} · {{ hora.bloque.hora_inicio|time:"H:i" }}</span>
+          {% if hora.motivo_cancelacion %}<span class="texto-suave small d-block">{{ hora.motivo_cancelacion }}</span>{% endif %}
+        </div>
+        <span class="estado estado-{{ hora.estado }}">{{ hora.get_estado_display }}</span>
+      </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

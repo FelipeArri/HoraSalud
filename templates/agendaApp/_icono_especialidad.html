@@ -1,0 +1,1 @@
+{% if 'Matron' in nombre %}{% include 'componentes/icono.html' with n='bebe' %}{% elif 'Cronico' in nombre or 'Diabetes' in nombre %}{% include 'componentes/icono.html' with n='corazon' %}{% else %}{% include 'componentes/icono.html' with n='estetoscopio' %}{% endif %}

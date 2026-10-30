@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}Confirma tu hora{% endblock %}
+
+{% block content %}
+{% with a=bloque.agenda %}
+<div class="angosto">
+  <a class="volver" href="{% url 'pedir_bloque' a.especialidad.pk %}?dia={{ a.fecha|date:'Y-m-d' }}">{% include 'componentes/icono.html' with n='atras' %}Elegir otra hora</a>
+  {% include 'agendaApp/_pasos.html' %}
+  <h1 class="mb-3">Revisa y confirma</h1>
+
+  <div class="tarjeta">
+    <dl class="resumen mb-0">
+      <dt>Paciente</dt><dd>{{ paciente_activo.usuario.get_full_name }}</dd>
+      <dt>Atención</dt><dd>{{ a.especialidad.nombre }}</dd>
+      <dt>Día</dt><dd class="capital">{{ a.fecha|date:"l j \d\e F \d\e Y" }}</dd>
+      <dt>Hora</dt><dd>{{ bloque.hora_inicio|time:"H:i" }} hrs <span class="texto-suave fw-normal">(llega 10 minutos antes)</span></dd>
+      <dt>Profesional</dt><dd>{{ a.profesional.usuario.get_full_name }}</dd>
+      <dt>Lugar</dt><dd class="mb-0">Box {{ a.profesional.box_atencion }} · CESFAM Padre Esteban Gumucio</dd>
+    </dl>
+  </div>
+
+  <form method="post" class="mt-3">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-verde btn-lg w-100">{% include 'componentes/icono.html' with n='check' %} Confirmar hora</button>
+  </form>
+  <p class="texto-suave small text-center mt-2">Puedes cancelarla hasta 2 horas antes desde "Mis horas".</p>
+</div>
+{% endwith %}
+{% endblock %}

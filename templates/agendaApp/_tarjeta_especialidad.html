@@ -1,0 +1,27 @@
+{% if t.vigente %}
+<a class="tarjeta-accion mb-3" href="{% url 'mis_horas' %}" style="border-color:var(--verde-borde)">
+  <span class="icono-caja">{% include 'agendaApp/_icono_especialidad.html' with nombre=t.especialidad.nombre %}</span>
+  <span>
+    <span class="titulo">{{ t.especialidad.nombre }}</span>
+    <span class="detalle">Ya tienes hora el <span class="capital">{{ t.vigente.bloque.agenda.fecha|date:"l j" }}</span> a las {{ t.vigente.bloque.hora_inicio|time:"H:i" }}. Para cambiarla, primero cancélala.</span>
+  </span>
+  <span class="flecha">{% include 'componentes/icono.html' with n='flecha' %}</span>
+</a>
+{% elif t.proximo %}
+<a class="tarjeta-accion mb-3" href="{% url 'pedir_bloque' t.especialidad.pk %}">
+  <span class="icono-caja">{% include 'agendaApp/_icono_especialidad.html' with nombre=t.especialidad.nombre %}</span>
+  <span>
+    <span class="titulo">{{ t.especialidad.nombre }}</span>
+    <span class="detalle">Próxima: <span class="capital">{{ t.proximo.agenda.fecha|date:"l j" }}</span> a las {{ t.proximo.hora_inicio|time:"H:i" }} · {{ t.cantidad }} horarios libres</span>
+  </span>
+  <span class="flecha">{% include 'componentes/icono.html' with n='flecha' %}</span>
+</a>
+{% else %}
+<div class="tarjeta-accion mb-3 opacity-75" style="cursor:default">
+  <span class="icono-caja rojo">{% include 'agendaApp/_icono_especialidad.html' with nombre=t.especialidad.nombre %}</span>
+  <span>
+    <span class="titulo">{{ t.especialidad.nombre }}</span>
+    <span class="detalle">Sin horas disponibles por ahora. Pregunta en el SOME por la lista de espera.</span>
+  </span>
+</div>
+{% endif %}

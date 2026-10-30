@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}Mi inicio{% endblock %}
+{% block ancho_alertas %}medio{% endblock %}
+
+{% block content %}
+<div class="medio">
+  <div class="saludo">
+    <span class="avatar">{{ paciente_activo.usuario.first_name|first }}</span>
+    <div>
+      <div class="texto-suave">{% if es_tutor %}Pidiendo horas por{% else %}Hola,{% endif %}</div>
+      <h1 class="mb-0">{{ paciente_activo.usuario.get_full_name }}</h1>
+      <div class="texto-suave small">{{ paciente_activo.sector.nombre|default:'' }}{% if paciente_activo.sector %} · {{ paciente_activo.sector.comuna }}{% endif %}</div>
+    </div>
+  </div>
+
+  <div class="etiqueta-seccion mb-2">Tu próxima hora</div>
+  {% if proxima %}
+    <div class="proxima mb-2">
+      {% include 'agendaApp/_tarjeta_hora.html' with hora=proxima %}
+      <div class="d-flex gap-2 mt-3 flex-wrap">
+        {% if proxima.estado == 'reservada' %}
+        <form method="post" action="{% url 'confirmar_asistencia' proxima.pk %}">{% csrf_token %}
+          <button class="btn btn-verde">{% include 'componentes/icono.html' with n='check' %} Confirmar asistencia</button>
+        </form>
+        {% endif %}
+        <a href="{% url 'cancelar_hora' proxima.pk %}" class="btn btn-rojo-borde">Cancelar hora</a>
+      </div>
+    </div>
+    {% if cantidad_vigentes > 1 %}<p class="texto-suave small mb-4">Tienes {{ cantidad_vigentes }} horas agendadas. <a href="{% url 'mis_horas' %}">Ver todas</a></p>{% else %}<div class="mb-4"></div>{% endif %}
+  {% else %}
+    <div class="tarjeta mb-4 text-center">
+      <p class="mb-1"><strong>No tienes horas agendadas.</strong></p>
+      <p class="texto-suave mb-0">Cuando reserves una, aparecerá aquí.</p>
+    </div>
+  {% endif %}
+
+  <div class="etiqueta-seccion mb-2">¿Qué necesitas hacer?</div>
+  <div class="row g-3">
+    <div class="col-12 col-md-6">
+      <a class="tarjeta-accion h-100" href="{% url 'pedir_especialidad' %}">
+        <span class="icono-caja">{% include 'componentes/icono.html' with n='calendario' %}</span>
+        <span><span class="titulo">Pedir una hora</span><span class="detalle">Medicina general y programas</span></span>
+        <span class="flecha">{% include 'componentes/icono.html' with n='flecha' %}</span>
+      </a>
+    </div>
+    <div class="col-12 col-md-6">
+      <a class="tarjeta-accion h-100" href="{% url 'mis_horas' %}">
+        <span class="icono-caja azul">{% include 'componentes/icono.html' with n='lista' %}</span>
+        <span><span class="titulo">Mis horas</span><span class="detalle">Ver, confirmar o cancelar</span></span>
+        <span class="flecha">{% include 'componentes/icono.html' with n='flecha' %}</span>
+      </a>
+    </div>
+    {% if es_tutor %}
+    <div class="col-12 col-md-6">
+      <a class="tarjeta-accion h-100" href="{% url 'elegir_paciente' %}">
+        <span class="icono-caja azul">{% include 'componentes/icono.html' with n='grupo' %}</span>
+        <span><span class="titulo">Cambiar persona a cargo</span><span class="detalle">Pedir hora para otra persona</span></span>
+        <span class="flecha">{% include 'componentes/icono.html' with n='flecha' %}</span>
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

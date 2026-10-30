@@ -1,0 +1,5 @@
+<ol class="pasos" aria-label="Paso {{ paso }} de 3">
+  <li class="{% if paso > 1 %}hecho{% else %}actual{% endif %}">Especialidad</li>
+  <li class="{% if paso > 2 %}hecho{% elif paso == 2 %}actual{% endif %}">Día y hora</li>
+  <li class="{% if paso == 3 %}actual{% endif %}">Confirmar</li>
+</ol>
