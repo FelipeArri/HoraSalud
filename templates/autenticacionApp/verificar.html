@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Confirma que eres tú{% endblock %}
 
@@ -7,19 +8,43 @@
   <a class="volver" href="{% url 'ingresar' %}">{% include 'componentes/icono.html' with n='atras' %}Cambiar RUT</a>
 
   <div class="tarjeta p-4 text-center">
+    {% csrf_token %}
     <div class="huella">{% include 'componentes/icono.html' with n='huella' %}</div>
     <h1 class="h2 mb-1">Hola, {{ usuario.first_name }}</h1>
-    <p class="texto-suave">Confirma que eres tú con la huella o el rostro de tu teléfono.</p>
 
-    <form method="post">
-      {% csrf_token %}
-      <button type="submit" class="btn btn-verde btn-lg w-100">Usar mi huella</button>
-    </form>
+    {% if tiene_passkey %}
+      <p class="texto-suave">Confirma que eres tú con la huella, el rostro o el PIN de tu dispositivo.</p>
+      <button type="button" id="boton-passkey" class="btn btn-verde btn-lg w-100">Usar mi huella</button>
+      <div id="estado-passkey" role="status" aria-live="polite"></div>
+    {% else %}
+      <p class="texto-suave">Aún no activas el ingreso con huella en este RUT.</p>
+      <a href="{% url 'enrolar' %}" class="btn btn-verde btn-lg w-100">Tengo un código del SOME</a>
+      <p class="texto-suave small mt-3 mb-0">El código te lo entregan en el SOME del CESFAM después de revisar tu cédula de identidad.</p>
+    {% endif %}
 
-    <div class="aviso-demo mt-3 text-start">
-      <strong>Modo demostración.</strong> En este prototipo la huella se simula. La verificación
-      real con passkeys (WebAuthn) se programa en el bloque B-06.
-    </div>
+    {% if modo_demo %}
+      <form method="post" class="mt-3">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-borde w-100">Entrar sin huella (modo demostración)</button>
+      </form>
+      <div class="aviso-demo mt-3 text-start">
+        <strong>Modo demostración.</strong> Este botón existe solo en el prototipo local
+        para probar con los usuarios ficticios. Se apaga junto con <code>DJANGO_DEBUG</code>.
+      </div>
+    {% endif %}
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{% if tiene_passkey %}
+<script src="{% static 'js/passkeys.js' %}"></script>
+<script>
+  HoraSaludPasskey.conectar({
+    boton: 'boton-passkey', estado: 'estado-passkey', rpId: '{{ rp_id|escapejs }}',
+    accion: HoraSaludPasskey.ingresar,
+    urls: { opciones: '{% url "passkey_ingreso_opciones" %}', verificar: '{% url "passkey_ingreso_verificar" %}' }
+  });
+</script>
+{% endif %}
 {% endblock %}

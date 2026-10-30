@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Registrar mi huella{% endblock %}
+
+{% block content %}
+<div class="angosto">
+  <div class="tarjeta p-4 text-center">
+    {% csrf_token %}
+    <div class="huella">{% include 'componentes/icono.html' with n='huella' %}</div>
+    <h1 class="h2 mb-1">{{ usuario.first_name }}, registra tu huella</h1>
+    <p class="texto-suave">Tu dispositivo te pedirá la huella, el rostro o su PIN. Es el mismo que usas para desbloquearlo.</p>
+    <button type="button" id="boton-registro" class="btn btn-verde btn-lg w-100">Registrar mi huella</button>
+    <div id="estado-registro" role="status" aria-live="polite"></div>
+  </div>
+
+  <div class="tarjeta mt-3">
+    <strong class="d-block mb-2">¿Qué va a pasar?</strong>
+    <ol class="texto-suave mb-0 ps-3">
+      <li>Aparece una ventana de tu teléfono o de Windows.</li>
+      <li>Pones tu huella, miras la cámara o escribes tu PIN.</li>
+      <li>Listo: la próxima vez solo escribes tu RUT y pones la huella.</li>
+    </ol>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/passkeys.js' %}"></script>
+<script>
+  HoraSaludPasskey.conectar({
+    boton: 'boton-registro', estado: 'estado-registro', rpId: '{{ rp_id|escapejs }}',
+    accion: HoraSaludPasskey.registrar,
+    urls: { opciones: '{% url "passkey_registro_opciones" %}', verificar: '{% url "passkey_registro_verificar" %}' }
+  });
+</script>
+{% endblock %}

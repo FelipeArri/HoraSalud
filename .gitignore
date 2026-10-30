@@ -1,5 +1,6 @@
 # Entorno virtual (se recrea con: py -3.11 -m venv venv)
 venv/
+.venv/
 
 # Secretos: nunca al repositorio (RNF-SEC02)
 .env

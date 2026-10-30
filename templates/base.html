@@ -25,6 +25,7 @@
           {% endif %}
           {% if es_some %}
             <a href="{% url 'some_nomina' %}" class="d-none d-md-inline-flex {% if ruta == 'some_nomina' %}activo{% endif %}">Nómina</a>
+            <a href="{% url 'some_enrolar' %}" class="d-none d-md-inline-flex {% if ruta == 'some_enrolar' %}activo{% endif %}">Activar huella</a>
             <a href="{% url 'sala_espera' %}" class="d-none d-md-inline-flex" target="_blank" rel="noopener">Pantalla sala</a>
           {% endif %}
           <span class="chip-usuario ms-1" title="{{ user.get_full_name|default:user.username }}">
@@ -67,7 +68,8 @@
       <a href="{% url 'pedir_especialidad' %}" class="{% if ruta|slice:':5' == 'pedir' %}activo{% endif %}">{% include 'componentes/icono.html' with n='calendario' %}Pedir hora</a>
       <a href="{% url 'mis_horas' %}" class="{% if ruta == 'mis_horas' or ruta == 'cancelar_hora' %}activo{% endif %}">{% include 'componentes/icono.html' with n='lista' %}Mis horas</a>
     {% elif es_some %}
-      <a href="{% url 'some_nomina' %}" class="activo">{% include 'componentes/icono.html' with n='portapapeles' %}Nómina</a>
+      <a href="{% url 'some_nomina' %}" class="{% if ruta == 'some_nomina' %}activo{% endif %}">{% include 'componentes/icono.html' with n='portapapeles' %}Nómina</a>
+      <a href="{% url 'some_enrolar' %}" class="{% if ruta == 'some_enrolar' %}activo{% endif %}">{% include 'componentes/icono.html' with n='huella' %}Activar huella</a>
     {% endif %}
     {% if es_tutor %}
       <a href="{% url 'elegir_paciente' %}" class="{% if ruta == 'elegir_paciente' %}activo{% endif %}">{% include 'componentes/icono.html' with n='grupo' %}A cargo</a>

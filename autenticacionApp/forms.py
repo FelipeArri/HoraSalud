@@ -23,3 +23,15 @@ class IngresoRutForm(forms.Form):
         except ValidationError:
             raise ValidationError('Revisa tu RUT: el número o el dígito verificador no es correcto.')
         return rut
+
+
+class EnrolamientoForm(IngresoRutForm):
+    """B-06: RUT + codigo de un solo uso que entrega el SOME."""
+
+    codigo = forms.CharField(label='Código del SOME', max_length=12)
+
+    def clean_codigo(self):
+        codigo = ''.join(c for c in self.cleaned_data['codigo'] if c.isdigit())
+        if len(codigo) != 8:
+            raise ValidationError('El código tiene 8 números (ej. 1234-5678).')
+        return codigo

@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}Activar mi huella{% endblock %}
+
+{% block content %}
+<div class="angosto">
+  <a class="volver" href="{% url 'ingresar' %}">{% include 'componentes/icono.html' with n='atras' %}Volver</a>
+
+  <div class="tarjeta p-4">
+    <div class="text-center mb-3">
+      <span class="icono-caja mx-auto mb-3">{% include 'componentes/icono.html' with n='escudo' %}</span>
+      <h1 class="h2 mb-1">Activa tu ingreso con huella</h1>
+      <p class="texto-suave mb-0">Escribe tu RUT y el código de 8 números que te entregó el SOME.</p>
+    </div>
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <label for="id_rut" class="form-label fw-semibold">RUT</label>
+      <input type="text" name="rut" id="id_rut" value="{{ form.rut.value|default:'' }}"
+             class="form-control form-control-lg campo-rut {% if form.rut.errors %}is-invalid{% endif %}"
+             placeholder="12.345.678-9" maxlength="12" autocomplete="username" autofocus>
+      {% for error in form.rut.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+
+      <label for="id_codigo" class="form-label fw-semibold mt-3">Código del SOME</label>
+      <input type="text" name="codigo" id="id_codigo" value="{{ form.codigo.value|default:'' }}"
+             class="form-control form-control-lg campo-rut {% if form.codigo.errors %}is-invalid{% endif %}"
+             placeholder="1234-5678" maxlength="9" inputmode="numeric" autocomplete="one-time-code">
+      {% for error in form.codigo.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+
+      <button type="submit" class="btn btn-verde btn-lg w-100 mt-3">Continuar</button>
+    </form>
+  </div>
+
+  <div class="tarjeta mt-3 d-flex gap-3 align-items-start">
+    <span class="icono-caja">{% include 'componentes/icono.html' with n='telefono' %}</span>
+    <div>
+      <strong>Tu huella no sale de tu teléfono</strong>
+      <div class="texto-suave">HoraSalud solo guarda una clave pública. Nunca recibimos tu huella ni tu rostro.</div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function () {
+    var rut = document.getElementById('id_rut'), codigo = document.getElementById('id_codigo');
+    rut.addEventListener('input', function () {
+      var l = rut.value.replace(/[^0-9kK]/g, '').toUpperCase().slice(0, 9);
+      rut.value = l.length < 2 ? l : l.slice(0, -1).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + '-' + l.slice(-1);
+    });
+    codigo.addEventListener('input', function () {
+      var d = codigo.value.replace(/\D/g, '').slice(0, 8);
+      codigo.value = d.length > 4 ? d.slice(0, 4) + '-' + d.slice(4) : d;
+    });
+  })();
+</script>
+{% endblock %}

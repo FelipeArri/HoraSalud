@@ -36,7 +36,7 @@ class IngresoTests(TestCase):
     @override_settings(HORASALUD_INGRESO_DEMO=False)
     def test_sin_modo_demo_no_se_entra_solo_con_rut(self):
         self.client.post(reverse('ingresar'), {'rut': self.paciente.usuario.rut})
-        self.assertEqual(self.client.get(reverse('verificar')).status_code, 404)
+        self.assertEqual(self.client.post(reverse('verificar')).status_code, 404)  # B-06: solo con passkey
 
     def test_tutor_elige_solo_a_sus_dependientes(self):
         # RF-03 y RN-07

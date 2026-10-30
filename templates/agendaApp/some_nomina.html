@@ -9,7 +9,10 @@
     <div class="etiqueta-seccion">Panel SOME</div>
     <h1 class="mb-0">Nómina del <span class="capital">{{ dia|date:"l j \d\e F" }}</span>{% if dia == hoy %} <span class="estado estado-confirmada align-middle">Hoy</span>{% endif %}</h1>
   </div>
-  <a href="{% url 'sala_espera' %}" target="_blank" rel="noopener" class="btn btn-borde">{% include 'componentes/icono.html' with n='monitor' %} Abrir pantalla de sala</a>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="{% url 'some_enrolar' %}" class="btn btn-verde">{% include 'componentes/icono.html' with n='huella' %} Activar huella de paciente</a>
+    <a href="{% url 'sala_espera' %}" target="_blank" rel="noopener" class="btn btn-borde">{% include 'componentes/icono.html' with n='monitor' %} Pantalla de sala</a>
+  </div>
 </div>
 
 {% if fechas %}

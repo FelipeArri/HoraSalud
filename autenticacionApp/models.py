@@ -67,3 +67,48 @@ class Profesional(models.Model):
 
     def __str__(self):
         return str(self.usuario)
+
+
+class CredencialPasskey(models.Model):
+    """
+    Passkey de un usuario (B-06, RNF-SEC02). El servidor guarda SOLO la clave
+    publica: la huella o el rostro nunca salen del telefono (Ley 21.719).
+    """
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='passkeys')
+    credencial_id = models.CharField(max_length=255, unique=True)  # base64url
+    clave_publica = models.BinaryField()
+    contador_firmas = models.PositiveBigIntegerField(default=0)
+    dispositivo = models.CharField(max_length=120, blank=True)
+    creada_en = models.DateTimeField(auto_now_add=True)
+    ultimo_uso = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'passkey'
+        verbose_name_plural = 'Passkeys'
+
+    def __str__(self):
+        return f'{self.usuario} - {self.dispositivo or "dispositivo"}'
+
+
+class CodigoEnrolamiento(models.Model):
+    """
+    Codigo de un solo uso que entrega el SOME despues de validar la cedula
+    EN PERSONA. Se guarda solo su hash; vence y se bloquea tras 5 intentos.
+    """
+    MAX_INTENTOS = 5
+
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='codigos_enrolamiento')
+    codigo_hash = models.CharField(max_length=64)
+    creado_por = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, related_name='+')
+    creado_en = models.DateTimeField(auto_now_add=True)
+    expira_en = models.DateTimeField()
+    usado_en = models.DateTimeField(null=True, blank=True)
+    intentos = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        verbose_name = 'código de enrolamiento'
+        verbose_name_plural = 'Códigos de enrolamiento'
+        ordering = ['-creado_en']
+
+    def __str__(self):
+        return f'{self.usuario} - {"usado" if self.usado_en else "vigente"}'
