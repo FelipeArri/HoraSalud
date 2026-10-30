@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Ingresar{% endblock %}
+
+{% block content %}
+{% with modo=request.GET.modo %}
+<div class="angosto">
+  <a class="volver" href="{% url 'inicio' %}">{% include 'componentes/icono.html' with n='atras' %}Volver</a>
+
+  <div class="tarjeta p-4">
+    <div class="text-center mb-3">
+      <span class="icono-caja mx-auto mb-3 {% if modo == 'tutor' %}azul{% elif modo == 'some' %}ambar{% endif %}">
+        {% if modo == 'tutor' %}{% include 'componentes/icono.html' with n='grupo' %}{% elif modo == 'some' %}{% include 'componentes/icono.html' with n='portapapeles' %}{% else %}{% include 'componentes/icono.html' with n='usuario' %}{% endif %}
+      </span>
+      <h1 class="h2 mb-1">{% if modo == 'tutor' %}Ingreso de tutor o cuidador{% elif modo == 'some' %}Ingreso funcionario SOME{% else %}Ingresa con tu RUT{% endif %}</h1>
+      <p class="texto-suave mb-0">{% if modo == 'tutor' %}Escribe <strong>tu</strong> RUT, no el de la persona a cargo.{% else %}Escribe tu RUT con dígito verificador.{% endif %}</p>
+    </div>
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <label for="{{ form.rut.id_for_label }}" class="form-label fw-semibold">RUT</label>
+      <input type="text" name="rut" id="{{ form.rut.id_for_label }}" value="{{ form.rut.value|default:'' }}"
+             class="form-control form-control-lg campo-rut {% if form.rut.errors %}is-invalid{% endif %}"
+             placeholder="12.345.678-9" maxlength="12" autocomplete="username" autofocus
+             aria-describedby="ayuda-rut">
+      {% for error in form.rut.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+      <div id="ayuda-rut" class="form-text">Puedes escribirlo con o sin puntos.</div>
+      <button type="submit" class="btn btn-verde btn-lg w-100 mt-3">Continuar</button>
+    </form>
+  </div>
+
+  <div class="tarjeta mt-3 d-flex gap-3 align-items-center">
+    <span class="icono-caja azul">{% include 'componentes/icono.html' with n='ubicacion' %}</span>
+    <div>
+      <strong>¿Problemas para ingresar?</strong>
+      <div class="texto-suave">Acércate al SOME del CESFAM. Allí te inscriben y activan tu huella en el teléfono.</div>
+    </div>
+  </div>
+</div>
+{% endwith %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Formatea el RUT mientras se escribe: 12345678-9 -> 12.345.678-9 (solo ayuda visual)
+  (function () {
+    var campo = document.getElementById('{{ form.rut.id_for_label }}');
+    if (!campo) return;
+    campo.addEventListener('input', function () {
+      var limpio = campo.value.replace(/[^0-9kK]/g, '').toUpperCase().slice(0, 9);
+      if (limpio.length < 2) { campo.value = limpio; return; }
+      var cuerpo = limpio.slice(0, -1), dv = limpio.slice(-1);
+      campo.value = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + '-' + dv;
+    });
+  })();
+</script>
+{% endblock %}

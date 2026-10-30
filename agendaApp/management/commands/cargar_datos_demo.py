@@ -47,7 +47,7 @@ def rut_ficticio(numero):
 
 
 def proximos_dias_habiles(cantidad):
-    dia, dias = date.today(), []
+    dia, dias = date.today() - timedelta(days=1), []  # incluye hoy si es dia habil
     while len(dias) < cantidad:
         dia += timedelta(days=1)
         if dia.weekday() < 5:

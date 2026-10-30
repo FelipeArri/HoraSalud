@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}Confirma que eres tú{% endblock %}
+
+{% block content %}
+<div class="angosto">
+  <a class="volver" href="{% url 'ingresar' %}">{% include 'componentes/icono.html' with n='atras' %}Cambiar RUT</a>
+
+  <div class="tarjeta p-4 text-center">
+    <div class="huella">{% include 'componentes/icono.html' with n='huella' %}</div>
+    <h1 class="h2 mb-1">Hola, {{ usuario.first_name }}</h1>
+    <p class="texto-suave">Confirma que eres tú con la huella o el rostro de tu teléfono.</p>
+
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-verde btn-lg w-100">Usar mi huella</button>
+    </form>
+
+    <div class="aviso-demo mt-3 text-start">
+      <strong>Modo demostración.</strong> En este prototipo la huella se simula. La verificación
+      real con passkeys (WebAuthn) se programa en el bloque B-06.
+    </div>
+  </div>
+</div>
+{% endblock %}

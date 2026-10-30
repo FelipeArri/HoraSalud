@@ -99,6 +99,13 @@ class Hora(models.Model):
     def __str__(self):
         return f'{self.paciente} - {self.bloque} - {self.get_estado_display()}'
 
+    @property
+    def codigo_turno(self):
+        """Codigo para la pantalla de sala, sin datos personales (RN-12). Ej.: MG-0820."""
+        nombre = self.bloque.agenda.especialidad.nombre.replace('-', ' ')
+        sigla = ''.join(p[0] for p in nombre.split() if p[0].isupper())[:2] or 'AT'
+        return f'{sigla.upper()}-{self.bloque.hora_inicio:%H%M}'
+
 
 def sincronizar_estado_bloques(bloque_ids):
     """Defecto DEF-01: el bloque queda 'Reservado' si tiene una hora vigente y

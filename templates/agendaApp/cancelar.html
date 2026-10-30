@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Cancelar hora{% endblock %}
+
+{% block content %}
+<div class="angosto">
+  <a class="volver" href="{% url 'mis_horas' %}">{% include 'componentes/icono.html' with n='atras' %}Volver a mis horas</a>
+  <h1 class="mb-3">¿Cancelar esta hora?</h1>
+
+  <div class="tarjeta mb-3">{% include 'agendaApp/_tarjeta_hora.html' %}</div>
+
+  <form method="post">
+    {% csrf_token %}
+    <fieldset>
+      <legend class="h6 fw-bold">¿Por qué la cancelas?</legend>
+      {% for motivo in motivos %}
+        <label class="opcion">
+          <input type="radio" name="motivo" value="{{ motivo }}" required> <span>{{ motivo }}</span>
+        </label>
+      {% endfor %}
+    </fieldset>
+    <button type="submit" class="btn btn-danger btn-lg w-100 mt-2">Sí, cancelar hora</button>
+    <a href="{% url 'mis_horas' %}" class="btn btn-borde btn-lg w-100 mt-2">No, mantenerla</a>
+  </form>
+</div>
+{% endblock %}

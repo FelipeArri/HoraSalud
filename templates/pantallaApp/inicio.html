@@ -3,29 +3,51 @@
 {% block title %}Inicio{% endblock %}
 
 {% block content %}
-<section class="text-center py-4">
-  <h1 class="display-6 fw-bold">Bienvenido a HoraSalud</h1>
-  <p class="lead">Pide tu hora en el CESFAM Padre Esteban Gumucio sin hacer fila.</p>
-</section>
+<div class="medio">
+  <section class="portada mb-4">
+    <h1 class="fw-bold mb-2">Pide tu hora sin hacer fila</h1>
+    <p class="mb-4">Reserva, confirma o cancela tus horas del CESFAM Padre Esteban Gumucio desde tu teléfono o computador.</p>
+    <a href="{% url 'ingresar' %}" class="btn btn-light btn-lg text-success fw-bold px-4">Ingresar con mi RUT</a>
+  </section>
 
-<div class="row g-3 justify-content-center">
-  <div class="col-12 col-md-5">
-    <div class="card h-100 tarjeta-opcion">
-      <div class="card-body">
-        <h2 class="h5">Soy paciente</h2>
-        <p class="mb-0">Ingresa con tu huella o tu rostro desde el teléfono.</p>
-      </div>
+  <h2 class="h5 mb-3">¿Quién va a ingresar?</h2>
+  <div class="row g-3">
+    <div class="col-12 col-md-6">
+      <a class="tarjeta-accion h-100" href="{% url 'ingresar' %}">
+        <span class="icono-caja">{% include 'componentes/icono.html' with n='usuario' %}</span>
+        <span><span class="titulo">Soy paciente</span><span class="detalle">Ingresa con tu huella o tu rostro desde el teléfono.</span></span>
+        <span class="flecha">{% include 'componentes/icono.html' with n='flecha' %}</span>
+      </a>
+    </div>
+    <div class="col-12 col-md-6">
+      <a class="tarjeta-accion h-100" href="{% url 'ingresar' %}?modo=tutor">
+        <span class="icono-caja azul">{% include 'componentes/icono.html' with n='grupo' %}</span>
+        <span><span class="titulo">Soy tutor o cuidador</span><span class="detalle">Pide horas por la persona que tienes a cargo.</span></span>
+        <span class="flecha">{% include 'componentes/icono.html' with n='flecha' %}</span>
+      </a>
+    </div>
+    <div class="col-12 col-md-6">
+      <a class="tarjeta-accion h-100" href="{% url 'ingresar' %}?modo=some">
+        <span class="icono-caja ambar">{% include 'componentes/icono.html' with n='portapapeles' %}</span>
+        <span><span class="titulo">Funcionario SOME</span><span class="detalle">Nómina del día, asistencia y No-Show.</span></span>
+        <span class="flecha">{% include 'componentes/icono.html' with n='flecha' %}</span>
+      </a>
+    </div>
+    <div class="col-12 col-md-6">
+      <a class="tarjeta-accion h-100" href="{% url 'sala_espera' %}">
+        <span class="icono-caja azul">{% include 'componentes/icono.html' with n='monitor' %}</span>
+        <span><span class="titulo">Pantalla de sala de espera</span><span class="detalle">Turnos del día para el televisor del CESFAM.</span></span>
+        <span class="flecha">{% include 'componentes/icono.html' with n='flecha' %}</span>
+      </a>
     </div>
   </div>
-  <div class="col-12 col-md-5">
-    <div class="card h-100 tarjeta-opcion">
-      <div class="card-body">
-        <h2 class="h5">Soy tutor o cuidador</h2>
-        <p class="mb-0">Pide horas por la persona que tienes a cargo.</p>
-      </div>
+
+  <div class="tarjeta mt-4 d-flex gap-3 align-items-start">
+    <span class="icono-caja">{% include 'componentes/icono.html' with n='escudo' %}</span>
+    <div>
+      <strong>Tus datos están protegidos</strong>
+      <p class="texto-suave mb-0">Tu huella nunca sale de tu teléfono. Tratamos tus datos según las leyes 19.628, 21.719 y 20.584.</p>
     </div>
   </div>
 </div>
-
-<p class="text-center text-muted mt-4">El ingreso se habilita en el Sprint 4.</p>
 {% endblock %}

@@ -1,0 +1,15 @@
+{% with b=hora.bloque a=hora.bloque.agenda %}
+<div class="d-flex gap-3 align-items-start">
+  <span class="icono-caja">{% include 'agendaApp/_icono_especialidad.html' with nombre=a.especialidad.nombre %}</span>
+  <div class="flex-grow-1">
+    <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
+      <strong class="fs-5">{{ a.especialidad.nombre }}</strong>
+      <span class="estado estado-{{ hora.estado }}">{{ hora.get_estado_display }}</span>
+    </div>
+    <div class="dato-fila">{% include 'componentes/icono.html' with n='calendario' %}<span class="capital">{{ a.fecha|date:"l j \d\e F" }}</span></div>
+    <div class="dato-fila">{% include 'componentes/icono.html' with n='reloj' %}<span>{{ b.hora_inicio|time:"H:i" }} a {{ b.hora_fin|time:"H:i" }} hrs</span></div>
+    <div class="dato-fila">{% include 'componentes/icono.html' with n='usuario' %}<span>{{ a.profesional.usuario.get_full_name }} · Box {{ a.profesional.box_atencion }}</span></div>
+    <div class="dato-fila">{% include 'componentes/icono.html' with n='monitor' %}<span>Código en pantalla: <strong class="text-dark text-nowrap">{{ hora.codigo_turno }}</strong></span></div>
+  </div>
+</div>
+{% endwith %}
