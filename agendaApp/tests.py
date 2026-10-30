@@ -118,6 +118,51 @@ class DobleReservaBaseDatosTests(TestCase):
         self.assertEqual(Hora.objects.count(), antes)
 
 
+class EstadoBloqueTests(TestCase):
+    """DEF-01: el estado del bloque debe seguir a la hora (encontrado en la prueba del Sprint 3)."""
+
+    def setUp(self):
+        call_command('cargar_datos_demo', stdout=StringIO())
+        self.bloque = BloqueHorario.objects.filter(estado=BloqueHorario.Estado.DISPONIBLE).first()
+        self.paciente = Paciente.objects.first()
+
+    def estado_bloque(self, bloque=None):
+        return BloqueHorario.objects.get(pk=(bloque or self.bloque).pk).estado
+
+    def test_crear_hora_reserva_el_bloque(self):
+        Hora.objects.create(bloque=self.bloque, paciente=self.paciente, estado=Hora.Estado.CONFIRMADA)
+        self.assertEqual(self.estado_bloque(), BloqueHorario.Estado.RESERVADO)
+
+    def test_cancelar_hora_libera_el_bloque(self):
+        hora = Hora.objects.create(bloque=self.bloque, paciente=self.paciente)
+        hora.estado, hora.motivo_cancelacion = Hora.Estado.CANCELADA, 'Prueba'
+        hora.save()
+        self.assertEqual(self.estado_bloque(), BloqueHorario.Estado.DISPONIBLE)
+
+    def test_mover_hora_libera_el_bloque_anterior(self):
+        hora = Hora.objects.create(bloque=self.bloque, paciente=self.paciente)
+        otro = BloqueHorario.objects.filter(estado=BloqueHorario.Estado.DISPONIBLE).first()
+        hora.bloque = otro
+        hora.save()
+        self.assertEqual(self.estado_bloque(), BloqueHorario.Estado.DISPONIBLE)
+        self.assertEqual(self.estado_bloque(otro), BloqueHorario.Estado.RESERVADO)
+
+    def test_borrar_hora_libera_el_bloque(self):
+        Hora.objects.create(bloque=self.bloque, paciente=self.paciente).delete()
+        self.assertEqual(self.estado_bloque(), BloqueHorario.Estado.DISPONIBLE)
+
+    def test_bloque_bloqueado_no_cambia(self):
+        BloqueHorario.objects.filter(pk=self.bloque.pk).update(estado=BloqueHorario.Estado.BLOQUEADO)
+        self.bloque.refresh_from_db()
+        Hora.objects.create(bloque=self.bloque, paciente=self.paciente)
+        self.assertEqual(self.estado_bloque(), BloqueHorario.Estado.BLOQUEADO)
+
+    def test_datos_demo_quedan_consistentes(self):
+        inconsistentes = Hora.objects.exclude(estado=Hora.Estado.CANCELADA).exclude(
+            bloque__estado=BloqueHorario.Estado.RESERVADO)
+        self.assertFalse(inconsistentes.exists())
+
+
 class ConfiguracionSistemaTests(SimpleTestCase):
     def test_es_unica_y_trae_los_parametros_del_negocio(self):
         # Singleton

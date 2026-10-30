@@ -118,9 +118,7 @@ class Command(BaseCommand):
                 Hora.objects.create(bloque=bloque, paciente=paciente, estado=estado,
                                     motivo_cancelacion='Paciente avisa que no puede asistir'
                                     if estado == Hora.Estado.CANCELADA else '')
-                if estado != Hora.Estado.CANCELADA:
-                    bloque.estado = BloqueHorario.Estado.RESERVADO
-                    bloque.save()
+                # El estado del bloque lo actualiza Hora.save() (DEF-01).
 
         for orden, paciente in enumerate(pacientes[-3:], start=1):
             EsperaPaciente.objects.get_or_create(especialidad=especialidades[0], paciente=paciente,
