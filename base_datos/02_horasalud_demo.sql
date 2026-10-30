@@ -51,7 +51,7 @@ CREATE TABLE `agendaapp_agenda` (
 
 LOCK TABLES `agendaapp_agenda` WRITE;
 /*!40000 ALTER TABLE `agendaapp_agenda` DISABLE KEYS */;
-INSERT INTO `agendaapp_agenda` VALUES (1,'2026-11-02',1,'899cf0c7abc642b0a3d63371f500e285'),(2,'2026-11-02',2,'621a9bbc08fb4025a5b86f90daede79d'),(3,'2026-11-02',3,'6e192908797548d896507ef019871c6c'),(4,'2026-11-03',1,'899cf0c7abc642b0a3d63371f500e285'),(5,'2026-11-03',2,'621a9bbc08fb4025a5b86f90daede79d'),(6,'2026-11-03',3,'6e192908797548d896507ef019871c6c'),(7,'2026-11-04',1,'899cf0c7abc642b0a3d63371f500e285'),(8,'2026-11-04',2,'621a9bbc08fb4025a5b86f90daede79d'),(9,'2026-11-04',3,'6e192908797548d896507ef019871c6c'),(10,'2026-11-05',1,'899cf0c7abc642b0a3d63371f500e285'),(11,'2026-11-05',2,'621a9bbc08fb4025a5b86f90daede79d'),(12,'2026-11-05',3,'6e192908797548d896507ef019871c6c'),(13,'2026-11-06',1,'899cf0c7abc642b0a3d63371f500e285'),(14,'2026-11-06',2,'621a9bbc08fb4025a5b86f90daede79d'),(15,'2026-11-06',3,'6e192908797548d896507ef019871c6c');
+INSERT INTO `agendaapp_agenda` VALUES (1,'2026-10-30',1,'93c4b21c7e054f48a7f37542ded071c9'),(2,'2026-10-30',2,'615fd771b58d494f856767a5e7670407'),(3,'2026-10-30',3,'41b7efd9e3654617beb83c843362776e'),(4,'2026-11-02',1,'93c4b21c7e054f48a7f37542ded071c9'),(5,'2026-11-02',2,'615fd771b58d494f856767a5e7670407'),(6,'2026-11-02',3,'41b7efd9e3654617beb83c843362776e'),(7,'2026-11-03',1,'93c4b21c7e054f48a7f37542ded071c9'),(8,'2026-11-03',2,'615fd771b58d494f856767a5e7670407'),(9,'2026-11-03',3,'41b7efd9e3654617beb83c843362776e'),(10,'2026-11-04',1,'93c4b21c7e054f48a7f37542ded071c9'),(11,'2026-11-04',2,'615fd771b58d494f856767a5e7670407'),(12,'2026-11-04',3,'41b7efd9e3654617beb83c843362776e'),(13,'2026-11-05',1,'93c4b21c7e054f48a7f37542ded071c9'),(14,'2026-11-05',2,'615fd771b58d494f856767a5e7670407'),(15,'2026-11-05',3,'41b7efd9e3654617beb83c843362776e');
 /*!40000 ALTER TABLE `agendaapp_agenda` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -140,8 +140,73 @@ CREATE TABLE `agendaapp_hora` (
 
 LOCK TABLES `agendaapp_hora` WRITE;
 /*!40000 ALTER TABLE `agendaapp_hora` DISABLE KEYS */;
-INSERT INTO `agendaapp_hora` VALUES ('063c4c25231b42c28cc5d5ce4024df4a','reservada','','2026-10-30 19:26:30.430314',83,83,'e090e5efd2be416ebc0da44407959ceb'),('0bfeb31afced47f2b0fb24c796987293','reservada','','2026-10-30 19:26:30.435794',143,143,'22d6f31a4017407f93ea8cbc15d18b5d'),('0cdbec465df24d1a96b7d6345a11f20a','confirmada','','2026-10-30 19:26:30.437869',138,138,'a5a28a867f674f3d93133818334c5d7f'),('17521a510025448a90c661c0135f6e86','confirmada','','2026-10-30 19:26:30.437869',60,60,'e090e5efd2be416ebc0da44407959ceb'),('1af088a02d104a1da4dc7c42abeec4d5','reservada','','2026-10-30 19:26:30.434796',13,13,'7ad1b8bb03d045fab19ee172a5fb19cd'),('337638b8b1fb4090af6493d505873927','cancelada','Paciente avisa que no puede asistir','2026-10-30 19:26:30.438870',10,NULL,'ea4513b6fca04c28b844e6ea31e989b6'),('3493605869c24267930619bae1fb6017','confirmada','','2026-10-30 19:26:30.436864',158,158,'046ec3bf40ff4d4fb77bdcfd76253014'),('952b9e626944485dadeaa6192f7b2b9b','reservada','','2026-10-30 19:26:30.431408',39,39,'ea4513b6fca04c28b844e6ea31e989b6'),('9aabe051af51453faf970847054782ba','reservada','','2026-10-30 19:26:30.435794',27,27,'e5244a10952f404b9bdfc5e86ac94a73'),('9b32e872c1cb4d0fa84ac022cd3a8fda','confirmada','','2026-10-30 19:26:30.436864',16,16,'c0936ceb29384199b8cf1b2e5f0e1c9d'),('ab4c680176364520afb39c1bd378aaed','reservada','','2026-10-30 19:26:30.433792',170,170,'5051fe161c754552b6d4c84376c5c5f1'),('ac2e15cd820e4bbe8f5d5150b2517aa5','reservada','','2026-10-30 19:26:30.433792',104,104,'d793245ba4304defb72c7e9b9907df62'),('adbd3fcd944e4f8f999bf15689e905d5','cancelada','Paciente avisa que no puede asistir','2026-10-30 19:26:30.438870',28,NULL,'d793245ba4304defb72c7e9b9907df62'),('cb51dde157224b6588acb002fef8c729','reservada','','2026-10-30 19:26:30.434796',20,20,'789dab0a12034e9a9ef8aca8aad06cdd'),('f0866ca6c1704683a73fab474aeb655a','confirmada','','2026-10-30 19:26:30.436864',99,99,'3d10ff596c44441fbef0d82b81e71254');
+INSERT INTO `agendaapp_hora` VALUES ('0cab51a551b940e3aab0afd23f2be451','reservada','','2026-10-30 21:43:58.271280',104,104,'7c0e8abf76aa4ac1864317277aa85be8'),('3bce0805ca1c4ee1a1e3cf0f0393a4ca','confirmada','','2026-10-30 21:43:58.286646',60,60,'f01c7f8052594b4aae33d078e70a255c'),('3e68ad7e31a442f0a8f1210f8420bbaf','reservada','','2026-10-30 21:43:58.274279',13,13,'1d6ee884bc334873bdde6daaa7e0ab5c'),('430daa910fcf43e8b1fce5553f726b96','reservada','','2026-10-30 21:43:58.265170',83,83,'f01c7f8052594b4aae33d078e70a255c'),('51f747e6e4fb4f13b6cae10436ec3ffe','reservada','','2026-10-30 21:43:58.275283',20,20,'b51b79b6675541f780cba313e0098c52'),('57eed75de41642429577d3d38bc42772','reservada','','2026-10-30 21:43:58.279305',27,27,'8056865f81f64773b8319c4d25b5f193'),('65c57e915952459dbeccd6f58d27e0ae','cancelada','Paciente avisa que no puede asistir','2026-10-30 21:43:58.288645',28,NULL,'7c0e8abf76aa4ac1864317277aa85be8'),('79b6002feae64b8b856de43fd5cf1497','confirmada','','2026-10-30 21:43:58.281371',158,158,'a93ee08cb1014f4fbed1d46eecc73d8b'),('96c1f0422aab43d698ec08376c5af79f','reservada','','2026-10-30 21:43:58.273280',170,170,'2c07e21143644dcbb8048724a0edc40d'),('b7e20353ce384019ba81bab3dd0c97ee','confirmada','','2026-10-30 21:43:58.283371',16,16,'fe9b1a14847247e3b1f763de438e8d75'),('ba9773ecd56d48649afdc57fb7813c23','cancelada','Paciente avisa que no puede asistir','2026-10-30 21:43:58.287646',10,NULL,'137a56807d944730b4eebb78bddd9fe6'),('c6c2afa0b48940c2a81fd648ab1a6156','reservada','','2026-10-30 21:43:58.267279',39,39,'137a56807d944730b4eebb78bddd9fe6'),('ca968f3e3913486b81e685480dcc3f49','confirmada','','2026-10-30 21:43:58.280366',99,99,'1c1f1005f0c846a68c78e58572e1340f'),('e4b14fc583f54360999e5b6cf2eabc22','reservada','','2026-10-30 21:43:58.277284',143,143,'4b237a8849f14157a9439e261137a177'),('e8467d620de8491e8ff796a502e10d58','confirmada','','2026-10-30 21:43:58.285640',138,138,'2115ff559650411caf78ac706f7e495e');
 /*!40000 ALTER TABLE `agendaapp_hora` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `autenticacionapp_codigoenrolamiento`
+--
+
+DROP TABLE IF EXISTS `autenticacionapp_codigoenrolamiento`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `autenticacionapp_codigoenrolamiento` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `codigo_hash` varchar(64) NOT NULL,
+  `creado_en` datetime(6) NOT NULL,
+  `expira_en` datetime(6) NOT NULL,
+  `usado_en` datetime(6) DEFAULT NULL,
+  `intentos` smallint(5) unsigned NOT NULL CHECK (`intentos` >= 0),
+  `creado_por_id` char(32) DEFAULT NULL,
+  `usuario_id` char(32) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `autenticacionApp_cod_creado_por_id_53bffd70_fk_autentica` (`creado_por_id`),
+  KEY `autenticacionApp_cod_usuario_id_e51c9032_fk_autentica` (`usuario_id`),
+  CONSTRAINT `autenticacionApp_cod_creado_por_id_53bffd70_fk_autentica` FOREIGN KEY (`creado_por_id`) REFERENCES `autenticacionapp_usuario` (`id`),
+  CONSTRAINT `autenticacionApp_cod_usuario_id_e51c9032_fk_autentica` FOREIGN KEY (`usuario_id`) REFERENCES `autenticacionapp_usuario` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `autenticacionapp_codigoenrolamiento`
+--
+
+LOCK TABLES `autenticacionapp_codigoenrolamiento` WRITE;
+/*!40000 ALTER TABLE `autenticacionapp_codigoenrolamiento` DISABLE KEYS */;
+/*!40000 ALTER TABLE `autenticacionapp_codigoenrolamiento` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `autenticacionapp_credencialpasskey`
+--
+
+DROP TABLE IF EXISTS `autenticacionapp_credencialpasskey`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `autenticacionapp_credencialpasskey` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `credencial_id` varchar(255) NOT NULL,
+  `clave_publica` longblob NOT NULL,
+  `contador_firmas` bigint(20) unsigned NOT NULL CHECK (`contador_firmas` >= 0),
+  `dispositivo` varchar(120) NOT NULL,
+  `creada_en` datetime(6) NOT NULL,
+  `ultimo_uso` datetime(6) DEFAULT NULL,
+  `usuario_id` char(32) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `credencial_id` (`credencial_id`),
+  KEY `autenticacionApp_cre_usuario_id_8764cf49_fk_autentica` (`usuario_id`),
+  CONSTRAINT `autenticacionApp_cre_usuario_id_8764cf49_fk_autentica` FOREIGN KEY (`usuario_id`) REFERENCES `autenticacionapp_usuario` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `autenticacionapp_credencialpasskey`
+--
+
+LOCK TABLES `autenticacionapp_credencialpasskey` WRITE;
+/*!40000 ALTER TABLE `autenticacionapp_credencialpasskey` DISABLE KEYS */;
+/*!40000 ALTER TABLE `autenticacionapp_credencialpasskey` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -171,7 +236,7 @@ CREATE TABLE `autenticacionapp_paciente` (
 
 LOCK TABLES `autenticacionapp_paciente` WRITE;
 /*!40000 ALTER TABLE `autenticacionapp_paciente` DISABLE KEYS */;
-INSERT INTO `autenticacionapp_paciente` VALUES ('046ec3bf40ff4d4fb77bdcfd76253014','FC-1009',1,NULL),('22d6f31a4017407f93ea8cbc15d18b5d','FC-1006',1,NULL),('3d10ff596c44441fbef0d82b81e71254','FC-1008',3,NULL),('5051fe161c754552b6d4c84376c5c5f1','FC-1003',1,NULL),('789dab0a12034e9a9ef8aca8aad06cdd','FC-1005',3,NULL),('7ad1b8bb03d045fab19ee172a5fb19cd','FC-1004',2,NULL),('a5a28a867f674f3d93133818334c5d7f','FC-1011',3,NULL),('c0936ceb29384199b8cf1b2e5f0e1c9d','FC-1010',2,NULL),('d793245ba4304defb72c7e9b9907df62','FC-1002',3,NULL),('e090e5efd2be416ebc0da44407959ceb','FC-1000',1,'a6214f02f00e4eb1817075a0a7c18d88'),('e5244a10952f404b9bdfc5e86ac94a73','FC-1007',2,NULL),('ea4513b6fca04c28b844e6ea31e989b6','FC-1001',2,'c0b33eff40404cc99873361aff803282');
+INSERT INTO `autenticacionapp_paciente` VALUES ('137a56807d944730b4eebb78bddd9fe6','FC-1001',2,'0a51078e7b3041e189a92bfe87a4589e'),('1c1f1005f0c846a68c78e58572e1340f','FC-1008',3,NULL),('1d6ee884bc334873bdde6daaa7e0ab5c','FC-1004',2,NULL),('2115ff559650411caf78ac706f7e495e','FC-1011',3,NULL),('2c07e21143644dcbb8048724a0edc40d','FC-1003',1,NULL),('4b237a8849f14157a9439e261137a177','FC-1006',1,NULL),('7c0e8abf76aa4ac1864317277aa85be8','FC-1002',3,NULL),('8056865f81f64773b8319c4d25b5f193','FC-1007',2,NULL),('a93ee08cb1014f4fbed1d46eecc73d8b','FC-1009',1,NULL),('b51b79b6675541f780cba313e0098c52','FC-1005',3,NULL),('f01c7f8052594b4aae33d078e70a255c','FC-1000',1,'244789431959494cafd413ceb124ede5'),('fe9b1a14847247e3b1f763de438e8d75','FC-1010',2,NULL);
 /*!40000 ALTER TABLE `autenticacionapp_paciente` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -199,7 +264,7 @@ CREATE TABLE `autenticacionapp_profesional` (
 
 LOCK TABLES `autenticacionapp_profesional` WRITE;
 /*!40000 ALTER TABLE `autenticacionapp_profesional` DISABLE KEYS */;
-INSERT INTO `autenticacionapp_profesional` VALUES ('621a9bbc08fb4025a5b86f90daede79d','B-02',2),('6e192908797548d896507ef019871c6c','B-03',3),('899cf0c7abc642b0a3d63371f500e285','B-01',1);
+INSERT INTO `autenticacionapp_profesional` VALUES ('41b7efd9e3654617beb83c843362776e','B-03',3),('615fd771b58d494f856767a5e7670407','B-02',2),('93c4b21c7e054f48a7f37542ded071c9','B-01',1);
 /*!40000 ALTER TABLE `autenticacionapp_profesional` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -262,7 +327,7 @@ CREATE TABLE `autenticacionapp_usuario` (
 
 LOCK TABLES `autenticacionapp_usuario` WRITE;
 /*!40000 ALTER TABLE `autenticacionapp_usuario` DISABLE KEYS */;
-INSERT INTO `autenticacionapp_usuario` VALUES ('!EihJ0Ct6uIHYvRZIfYzWFiRg28mrPVG7ayzxxwXS',NULL,0,'demo_30000016','Raul','Carrasco Bravo','raul.30000016@correo-ficticio.cl',0,1,'2026-10-30 19:26:30.281257','046ec3bf40ff4d4fb77bdcfd76253014','30000016-9','+56900000016','paciente'),('!GjRFu2BccfFk5VFXPrlRGI34IcreFLOCS6g67lqr',NULL,0,'demo_30000013','Teresa','Espinoza Leiva','teresa.30000013@correo-ficticio.cl',0,1,'2026-10-30 19:26:30.276256','22d6f31a4017407f93ea8cbc15d18b5d','30000013-4','+56900000013','paciente'),('!ybB1QczC2e6JJQvJqcJNSIaT6KDSzXu1ZxXb640X',NULL,0,'demo_30000015','Gloria','Saavedra Nunez','gloria.30000015@correo-ficticio.cl',0,1,'2026-10-30 19:26:30.279259','3d10ff596c44441fbef0d82b81e71254','30000015-0','+56900000015','paciente'),('!iytEc9lQa2E2CdB2ssnIXOxiqg6GPbINVnzkAMLA',NULL,0,'demo_30000010','Pedro','Munoz Tapia','pedro.30000010@correo-ficticio.cl',0,1,'2026-10-30 19:26:30.269394','5051fe161c754552b6d4c84376c5c5f1','30000010-K','+56900000010','paciente'),('!FPa9xtT86X9hvmt6M2xyk3qjDwCsQ4x35ZLs2QrZ',NULL,0,'demo_30000002','Matias','Fuentes Lagos','matias.30000002@correo-ficticio.cl',0,1,'2026-10-30 19:26:30.254387','621a9bbc08fb4025a5b86f90daede79d','30000002-9','+56900000002','profesional'),('!mU0rNUI6J8XylTWCxrtJelBRkLaSShsjcIXFfMNL',NULL,0,'demo_30000003','Camila','Navarro Pino','camila.30000003@correo-ficticio.cl',0,1,'2026-10-30 19:26:30.257393','6e192908797548d896507ef019871c6c','30000003-7','+56900000003','profesional'),('!X5KNl5O9ni5KQrFgEePQulY1OmNUqGyJRE6IEODM',NULL,0,'demo_30000012','Manuel','Vargas Reyes','manuel.30000012@correo-ficticio.cl',0,1,'2026-10-30 19:26:30.274256','789dab0a12034e9a9ef8aca8aad06cdd','30000012-6','+56900000012','paciente'),('!xfydHha985iLI78KLmVMmqGNxNBZVTsxaONbyirE',NULL,0,'demo_30000011','Elena','Contreras Paz','elena.30000011@correo-ficticio.cl',0,1,'2026-10-30 19:26:30.272257','7ad1b8bb03d045fab19ee172a5fb19cd','30000011-8','+56900000011','paciente'),('!VMWXciOPqzuajoTOLarbREVVz27aQKl3WKCpfnt3',NULL,0,'demo_30000004','Sofia','Ramirez Cortes','sofia.30000004@correo-ficticio.cl',0,1,'2026-10-30 19:26:30.259394','880eddb7d1884079ac35c97b88a62ed3','30000004-5','+56900000004','administrativo'),('!k4MqN5Zh5WnzY1JNn51npYsx1PeevDKsKVTZsOR9',NULL,0,'demo_30000001','Valentina','Rojas Soto','valentina.30000001@correo-ficticio.cl',0,1,'2026-10-30 19:26:30.250752','899cf0c7abc642b0a3d63371f500e285','30000001-0','+56900000001','profesional'),('!ej7ORPQ4lSUZhIrcUaOF4THGsLyZdUYiMK0KFkQx',NULL,0,'demo_30000018','Oscar','Alarcon Mella','oscar.30000018@correo-ficticio.cl',0,1,'2026-10-30 19:26:30.285255','a5a28a867f674f3d93133818334c5d7f','30000018-5','+56900000018','paciente'),('!STg8Bpd2MxKDK4PAXU0jNVaxdneNBNRnLY5uussB',NULL,0,'demo_30000005','Patricia','Morales Vega','patricia.30000005@correo-ficticio.cl',0,1,'2026-10-30 19:26:30.260410','a6214f02f00e4eb1817075a0a7c18d88','30000005-3','+56900000005','tutor'),('!MECAjcphWFiaUImCxlQ1I8HQcvWMNIBzBHTULw2n',NULL,0,'demo_30000017','Ines','Sepulveda Toro','ines.30000017@correo-ficticio.cl',0,1,'2026-10-30 19:26:30.283258','c0936ceb29384199b8cf1b2e5f0e1c9d','30000017-7','+56900000017','paciente'),('!VarXq51saPGeDEEVFKUOUSdOna6D64NRcbeLuUfS',NULL,0,'demo_30000006','Jorge','Castillo Ruiz','jorge.30000006@correo-ficticio.cl',0,1,'2026-10-30 19:26:30.261400','c0b33eff40404cc99873361aff803282','30000006-1','+56900000006','tutor'),('!GsurKs4zpdBYTvpSd0swnzolohJEXn4up3pO2unT',NULL,0,'demo_30000009','Carmen','Silva Araya','carmen.30000009@correo-ficticio.cl',0,1,'2026-10-30 19:26:30.268394','d793245ba4304defb72c7e9b9907df62','30000009-6','+56900000009','paciente'),('!lK0lUk6udmFC9kPM6vKCSe1NbjVWyE5XFdAlMHzn',NULL,0,'demo_30000007','Rosa','Gonzalez Mena','rosa.30000007@correo-ficticio.cl',0,1,'2026-10-30 19:26:30.263399','e090e5efd2be416ebc0da44407959ceb','30000007-K','+56900000007','paciente'),('!TSPYCaO5GIWPqzRgYXbkUqMOOq9Fw8ibwx61EPHA',NULL,0,'demo_30000014','Hector','Pizarro Olivares','hector.30000014@correo-ficticio.cl',0,1,'2026-10-30 19:26:30.277261','e5244a10952f404b9bdfc5e86ac94a73','30000014-2','+56900000014','paciente'),('!juC1iU8psRgm6n2n1Kr5ky7HAAR5W2ViBFH6FcqI',NULL,0,'demo_30000008','Luis','Herrera Diaz','luis.30000008@correo-ficticio.cl',0,1,'2026-10-30 19:26:30.266401','ea4513b6fca04c28b844e6ea31e989b6','30000008-8','+56900000008','paciente');
+INSERT INTO `autenticacionapp_usuario` VALUES ('!vCi8a4xu2j6Yd11iczQULrbVR6U7V8A4ch6We6Ng',NULL,0,'demo_30000006','Jorge','Castillo Ruiz','jorge.30000006@correo-ficticio.cl',0,1,'2026-10-30 21:43:58.058278','0a51078e7b3041e189a92bfe87a4589e','30000006-1','+56900000006','tutor'),('!xqqK3QlxXIXGks8NdWHnIdseljxEv7la7016GcGZ',NULL,0,'demo_30000008','Luis','Herrera Diaz','luis.30000008@correo-ficticio.cl',0,1,'2026-10-30 21:43:58.063007','137a56807d944730b4eebb78bddd9fe6','30000008-8','+56900000008','paciente'),('!hIlWABeiq5KW98Spx8coy4n6y3Wuom6EnuuHFMzT',NULL,0,'demo_30000015','Gloria','Saavedra Nunez','gloria.30000015@correo-ficticio.cl',0,1,'2026-10-30 21:43:58.076011','1c1f1005f0c846a68c78e58572e1340f','30000015-0','+56900000015','paciente'),('!socMZvZVitMjm1j6AEupUSXK96Hdxo06vqiU4y9d',NULL,0,'demo_30000004','Sofia','Ramirez Cortes','sofia.30000004@correo-ficticio.cl',0,1,'2026-10-30 21:43:58.056279','1ccd9329d4d94eb489d4a854e24dcabe','30000004-5','+56900000004','administrativo'),('!cZUr6wnZQGzk7NYHWrkUC2oIveozdJRhllZpdpl5',NULL,0,'demo_30000011','Elena','Contreras Paz','elena.30000011@correo-ficticio.cl',0,1,'2026-10-30 21:43:58.069006','1d6ee884bc334873bdde6daaa7e0ab5c','30000011-8','+56900000011','paciente'),('!vE1mEbyb4fT0ltckBhiNOzaMUwQIxRCOThjnCG8Z',NULL,0,'demo_30000018','Oscar','Alarcon Mella','oscar.30000018@correo-ficticio.cl',0,1,'2026-10-30 21:43:58.082011','2115ff559650411caf78ac706f7e495e','30000018-5','+56900000018','paciente'),('!6GN1opOAVfqjdRscJfn52EcSPXCP7atYcmjb850N',NULL,0,'demo_30000005','Patricia','Morales Vega','patricia.30000005@correo-ficticio.cl',0,1,'2026-10-30 21:43:58.057278','244789431959494cafd413ceb124ede5','30000005-3','+56900000005','tutor'),('!RC03LJtcVDxJEOZspIh1WykDb7RWoIodXvqVA6Kz',NULL,0,'demo_30000010','Pedro','Munoz Tapia','pedro.30000010@correo-ficticio.cl',0,1,'2026-10-30 21:43:58.067006','2c07e21143644dcbb8048724a0edc40d','30000010-K','+56900000010','paciente'),('!rP3hJy23GByamPxIhka9MLI8KnwIdZZeHEDDrSda',NULL,0,'demo_30000003','Camila','Navarro Pino','camila.30000003@correo-ficticio.cl',0,1,'2026-10-30 21:43:58.053251','41b7efd9e3654617beb83c843362776e','30000003-7','+56900000003','profesional'),('!ZBwR3x6t8dfOl1JlFemxvBHzTQzSR1ZYg7yiPrfB',NULL,0,'demo_30000013','Teresa','Espinoza Leiva','teresa.30000013@correo-ficticio.cl',0,1,'2026-10-30 21:43:58.072006','4b237a8849f14157a9439e261137a177','30000013-4','+56900000013','paciente'),('!LQgTk6DJwDQwgKkZBp2Q8bH8lIKXeImTdqAz8AI7',NULL,0,'demo_30000002','Matias','Fuentes Lagos','matias.30000002@correo-ficticio.cl',0,1,'2026-10-30 21:43:58.050180','615fd771b58d494f856767a5e7670407','30000002-9','+56900000002','profesional'),('!iCc9bcxJH7s9JovgahHvsJeLUmtKn95Am7dhuvTt',NULL,0,'demo_30000009','Carmen','Silva Araya','carmen.30000009@correo-ficticio.cl',0,1,'2026-10-30 21:43:58.065007','7c0e8abf76aa4ac1864317277aa85be8','30000009-6','+56900000009','paciente'),('!BnBziyw6hmdXnFuXReOEDu2MMI4a8v6vVafUwzpJ',NULL,0,'demo_30000014','Hector','Pizarro Olivares','hector.30000014@correo-ficticio.cl',0,1,'2026-10-30 21:43:58.074007','8056865f81f64773b8319c4d25b5f193','30000014-2','+56900000014','paciente'),('!7Apfapwoxl8MPxfEiSerehfJoUSfGqIVR4ZYXUY1',NULL,0,'demo_30000001','Valentina','Rojas Soto','valentina.30000001@correo-ficticio.cl',0,1,'2026-10-30 21:43:58.047175','93c4b21c7e054f48a7f37542ded071c9','30000001-0','+56900000001','profesional'),('!mB6UKCZ7abwcpASTpBu8LlR5nUytTyyv21aa4CVv',NULL,0,'demo_30000016','Raul','Carrasco Bravo','raul.30000016@correo-ficticio.cl',0,1,'2026-10-30 21:43:58.078011','a93ee08cb1014f4fbed1d46eecc73d8b','30000016-9','+56900000016','paciente'),('!3LsAiDvsELjrBmSP5n7sj8KqpSp2zaobxTwYlZPZ',NULL,0,'demo_30000012','Manuel','Vargas Reyes','manuel.30000012@correo-ficticio.cl',0,1,'2026-10-30 21:43:58.071006','b51b79b6675541f780cba313e0098c52','30000012-6','+56900000012','paciente'),('!X2WEToFURhuMG0j1JJ5RorHrg2shUrJAMZephFQs',NULL,0,'demo_30000007','Rosa','Gonzalez Mena','rosa.30000007@correo-ficticio.cl',0,1,'2026-10-30 21:43:58.059277','f01c7f8052594b4aae33d078e70a255c','30000007-K','+56900000007','paciente'),('!Z8LZrywIy3MYRTBgjwZqng9DbFIsEsdgHx9XiUrO',NULL,0,'demo_30000017','Ines','Sepulveda Toro','ines.30000017@correo-ficticio.cl',0,1,'2026-10-30 21:43:58.080011','fe9b1a14847247e3b1f763de438e8d75','30000017-7','+56900000017','paciente');
 /*!40000 ALTER TABLE `autenticacionapp_usuario` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -389,7 +454,7 @@ CREATE TABLE `auth_permission` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `auth_permission_content_type_id_codename_01ab375a_uniq` (`content_type_id`,`codename`),
   CONSTRAINT `auth_permission_content_type_id_2f476e4b_fk_django_co` FOREIGN KEY (`content_type_id`) REFERENCES `django_content_type` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=61 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=69 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -398,7 +463,7 @@ CREATE TABLE `auth_permission` (
 
 LOCK TABLES `auth_permission` WRITE;
 /*!40000 ALTER TABLE `auth_permission` DISABLE KEYS */;
-INSERT INTO `auth_permission` VALUES (1,'Can add log entry',1,'add_logentry'),(2,'Can change log entry',1,'change_logentry'),(3,'Can delete log entry',1,'delete_logentry'),(4,'Can view log entry',1,'view_logentry'),(5,'Can add permission',2,'add_permission'),(6,'Can change permission',2,'change_permission'),(7,'Can delete permission',2,'delete_permission'),(8,'Can view permission',2,'view_permission'),(9,'Can add group',3,'add_group'),(10,'Can change group',3,'change_group'),(11,'Can delete group',3,'delete_group'),(12,'Can view group',3,'view_group'),(13,'Can add content type',4,'add_contenttype'),(14,'Can change content type',4,'change_contenttype'),(15,'Can delete content type',4,'delete_contenttype'),(16,'Can view content type',4,'view_contenttype'),(17,'Can add session',5,'add_session'),(18,'Can change session',5,'change_session'),(19,'Can delete session',5,'delete_session'),(20,'Can view session',5,'view_session'),(21,'Can add user',6,'add_usuario'),(22,'Can change user',6,'change_usuario'),(23,'Can delete user',6,'delete_usuario'),(24,'Can view user',6,'view_usuario'),(25,'Can add sector',7,'add_sector'),(26,'Can change sector',7,'change_sector'),(27,'Can delete sector',7,'delete_sector'),(28,'Can view sector',7,'view_sector'),(29,'Can add profesional',8,'add_profesional'),(30,'Can change profesional',8,'change_profesional'),(31,'Can delete profesional',8,'delete_profesional'),(32,'Can view profesional',8,'view_profesional'),(33,'Can add paciente',9,'add_paciente'),(34,'Can change paciente',9,'change_paciente'),(35,'Can delete paciente',9,'delete_paciente'),(36,'Can view paciente',9,'view_paciente'),(37,'Can add agenda',10,'add_agenda'),(38,'Can change agenda',10,'change_agenda'),(39,'Can delete agenda',10,'delete_agenda'),(40,'Can view agenda',10,'view_agenda'),(41,'Can add bloque horario',11,'add_bloquehorario'),(42,'Can change bloque horario',11,'change_bloquehorario'),(43,'Can delete bloque horario',11,'delete_bloquehorario'),(44,'Can view bloque horario',11,'view_bloquehorario'),(45,'Can add especialidad',12,'add_especialidad'),(46,'Can change especialidad',12,'change_especialidad'),(47,'Can delete especialidad',12,'delete_especialidad'),(48,'Can view especialidad',12,'view_especialidad'),(49,'Can add hora',13,'add_hora'),(50,'Can change hora',13,'change_hora'),(51,'Can delete hora',13,'delete_hora'),(52,'Can view hora',13,'view_hora'),(53,'Can add paciente en espera',14,'add_esperapaciente'),(54,'Can change paciente en espera',14,'change_esperapaciente'),(55,'Can delete paciente en espera',14,'delete_esperapaciente'),(56,'Can view paciente en espera',14,'view_esperapaciente'),(57,'Can add notificacion',15,'add_registronotificacion'),(58,'Can change notificacion',15,'change_registronotificacion'),(59,'Can delete notificacion',15,'delete_registronotificacion'),(60,'Can view notificacion',15,'view_registronotificacion');
+INSERT INTO `auth_permission` VALUES (1,'Can add log entry',1,'add_logentry'),(2,'Can change log entry',1,'change_logentry'),(3,'Can delete log entry',1,'delete_logentry'),(4,'Can view log entry',1,'view_logentry'),(5,'Can add permission',2,'add_permission'),(6,'Can change permission',2,'change_permission'),(7,'Can delete permission',2,'delete_permission'),(8,'Can view permission',2,'view_permission'),(9,'Can add group',3,'add_group'),(10,'Can change group',3,'change_group'),(11,'Can delete group',3,'delete_group'),(12,'Can view group',3,'view_group'),(13,'Can add content type',4,'add_contenttype'),(14,'Can change content type',4,'change_contenttype'),(15,'Can delete content type',4,'delete_contenttype'),(16,'Can view content type',4,'view_contenttype'),(17,'Can add session',5,'add_session'),(18,'Can change session',5,'change_session'),(19,'Can delete session',5,'delete_session'),(20,'Can view session',5,'view_session'),(21,'Can add user',6,'add_usuario'),(22,'Can change user',6,'change_usuario'),(23,'Can delete user',6,'delete_usuario'),(24,'Can view user',6,'view_usuario'),(25,'Can add sector',7,'add_sector'),(26,'Can change sector',7,'change_sector'),(27,'Can delete sector',7,'delete_sector'),(28,'Can view sector',7,'view_sector'),(29,'Can add profesional',8,'add_profesional'),(30,'Can change profesional',8,'change_profesional'),(31,'Can delete profesional',8,'delete_profesional'),(32,'Can view profesional',8,'view_profesional'),(33,'Can add paciente',9,'add_paciente'),(34,'Can change paciente',9,'change_paciente'),(35,'Can delete paciente',9,'delete_paciente'),(36,'Can view paciente',9,'view_paciente'),(37,'Can add passkey',10,'add_credencialpasskey'),(38,'Can change passkey',10,'change_credencialpasskey'),(39,'Can delete passkey',10,'delete_credencialpasskey'),(40,'Can view passkey',10,'view_credencialpasskey'),(41,'Can add código de enrolamiento',11,'add_codigoenrolamiento'),(42,'Can change código de enrolamiento',11,'change_codigoenrolamiento'),(43,'Can delete código de enrolamiento',11,'delete_codigoenrolamiento'),(44,'Can view código de enrolamiento',11,'view_codigoenrolamiento'),(45,'Can add agenda',12,'add_agenda'),(46,'Can change agenda',12,'change_agenda'),(47,'Can delete agenda',12,'delete_agenda'),(48,'Can view agenda',12,'view_agenda'),(49,'Can add bloque horario',13,'add_bloquehorario'),(50,'Can change bloque horario',13,'change_bloquehorario'),(51,'Can delete bloque horario',13,'delete_bloquehorario'),(52,'Can view bloque horario',13,'view_bloquehorario'),(53,'Can add especialidad',14,'add_especialidad'),(54,'Can change especialidad',14,'change_especialidad'),(55,'Can delete especialidad',14,'delete_especialidad'),(56,'Can view especialidad',14,'view_especialidad'),(57,'Can add hora',15,'add_hora'),(58,'Can change hora',15,'change_hora'),(59,'Can delete hora',15,'delete_hora'),(60,'Can view hora',15,'view_hora'),(61,'Can add paciente en espera',16,'add_esperapaciente'),(62,'Can change paciente en espera',16,'change_esperapaciente'),(63,'Can delete paciente en espera',16,'delete_esperapaciente'),(64,'Can view paciente en espera',16,'view_esperapaciente'),(65,'Can add notificacion',17,'add_registronotificacion'),(66,'Can change notificacion',17,'change_registronotificacion'),(67,'Can delete notificacion',17,'delete_registronotificacion'),(68,'Can view notificacion',17,'view_registronotificacion');
 /*!40000 ALTER TABLE `auth_permission` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -448,7 +513,7 @@ CREATE TABLE `django_content_type` (
   `model` varchar(100) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `django_content_type_app_label_model_76bd3d3b_uniq` (`app_label`,`model`)
-) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -457,7 +522,7 @@ CREATE TABLE `django_content_type` (
 
 LOCK TABLES `django_content_type` WRITE;
 /*!40000 ALTER TABLE `django_content_type` DISABLE KEYS */;
-INSERT INTO `django_content_type` VALUES (1,'admin','logentry'),(10,'agendaApp','agenda'),(11,'agendaApp','bloquehorario'),(12,'agendaApp','especialidad'),(13,'agendaApp','hora'),(9,'autenticacionApp','paciente'),(8,'autenticacionApp','profesional'),(7,'autenticacionApp','sector'),(6,'autenticacionApp','usuario'),(3,'auth','group'),(2,'auth','permission'),(4,'contenttypes','contenttype'),(14,'listaEsperaApp','esperapaciente'),(15,'notificacionesApp','registronotificacion'),(5,'sessions','session');
+INSERT INTO `django_content_type` VALUES (1,'admin','logentry'),(12,'agendaApp','agenda'),(13,'agendaApp','bloquehorario'),(14,'agendaApp','especialidad'),(15,'agendaApp','hora'),(11,'autenticacionApp','codigoenrolamiento'),(10,'autenticacionApp','credencialpasskey'),(9,'autenticacionApp','paciente'),(8,'autenticacionApp','profesional'),(7,'autenticacionApp','sector'),(6,'autenticacionApp','usuario'),(3,'auth','group'),(2,'auth','permission'),(4,'contenttypes','contenttype'),(16,'listaEsperaApp','esperapaciente'),(17,'notificacionesApp','registronotificacion'),(5,'sessions','session');
 /*!40000 ALTER TABLE `django_content_type` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -474,7 +539,7 @@ CREATE TABLE `django_migrations` (
   `name` varchar(255) NOT NULL,
   `applied` datetime(6) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -483,7 +548,7 @@ CREATE TABLE `django_migrations` (
 
 LOCK TABLES `django_migrations` WRITE;
 /*!40000 ALTER TABLE `django_migrations` DISABLE KEYS */;
-INSERT INTO `django_migrations` VALUES (1,'contenttypes','0001_initial','2026-10-30 19:26:27.142823'),(2,'contenttypes','0002_remove_content_type_name','2026-10-30 19:26:27.210111'),(3,'auth','0001_initial','2026-10-30 19:26:27.483270'),(4,'auth','0002_alter_permission_name_max_length','2026-10-30 19:26:27.601682'),(5,'auth','0003_alter_user_email_max_length','2026-10-30 19:26:27.609751'),(6,'auth','0004_alter_user_username_opts','2026-10-30 19:26:27.617993'),(7,'auth','0005_alter_user_last_login_null','2026-10-30 19:26:27.624962'),(8,'auth','0006_require_contenttypes_0002','2026-10-30 19:26:27.628352'),(9,'auth','0007_alter_validators_add_error_messages','2026-10-30 19:26:27.635390'),(10,'auth','0008_alter_user_username_max_length','2026-10-30 19:26:27.643434'),(11,'auth','0009_alter_user_last_name_max_length','2026-10-30 19:26:27.648353'),(12,'auth','0010_alter_group_name_max_length','2026-10-30 19:26:27.662355'),(13,'auth','0011_update_proxy_permissions','2026-10-30 19:26:27.667203'),(14,'auth','0012_alter_user_first_name_max_length','2026-10-30 19:26:27.671210'),(15,'agendaApp','0001_initial','2026-10-30 19:26:27.824851'),(16,'autenticacionApp','0001_initial','2026-10-30 19:26:28.437553'),(17,'admin','0001_initial','2026-10-30 19:26:28.584061'),(18,'admin','0002_logentry_remove_auto_add','2026-10-30 19:26:28.605153'),(19,'admin','0003_logentry_add_action_flag_choices','2026-10-30 19:26:28.613156'),(20,'agendaApp','0002_initial','2026-10-30 19:26:28.931291'),(21,'listaEsperaApp','0001_initial','2026-10-30 19:26:29.075250'),(22,'notificacionesApp','0001_initial','2026-10-30 19:26:29.160782'),(23,'sessions','0001_initial','2026-10-30 19:26:29.208725');
+INSERT INTO `django_migrations` VALUES (1,'contenttypes','0001_initial','2026-10-30 21:43:54.628939'),(2,'contenttypes','0002_remove_content_type_name','2026-10-30 21:43:54.694508'),(3,'auth','0001_initial','2026-10-30 21:43:54.926817'),(4,'auth','0002_alter_permission_name_max_length','2026-10-30 21:43:54.984307'),(5,'auth','0003_alter_user_email_max_length','2026-10-30 21:43:54.988316'),(6,'auth','0004_alter_user_username_opts','2026-10-30 21:43:54.991323'),(7,'auth','0005_alter_user_last_login_null','2026-10-30 21:43:54.994316'),(8,'auth','0006_require_contenttypes_0002','2026-10-30 21:43:54.995316'),(9,'auth','0007_alter_validators_add_error_messages','2026-10-30 21:43:54.999724'),(10,'auth','0008_alter_user_username_max_length','2026-10-30 21:43:55.002729'),(11,'auth','0009_alter_user_last_name_max_length','2026-10-30 21:43:55.005734'),(12,'auth','0010_alter_group_name_max_length','2026-10-30 21:43:55.012739'),(13,'auth','0011_update_proxy_permissions','2026-10-30 21:43:55.015735'),(14,'auth','0012_alter_user_first_name_max_length','2026-10-30 21:43:55.018235'),(15,'agendaApp','0001_initial','2026-10-30 21:43:55.174274'),(16,'autenticacionApp','0001_initial','2026-10-30 21:43:55.751444'),(17,'admin','0001_initial','2026-10-30 21:43:55.932635'),(18,'admin','0002_logentry_remove_auto_add','2026-10-30 21:43:55.943008'),(19,'admin','0003_logentry_add_action_flag_choices','2026-10-30 21:43:55.951997'),(20,'agendaApp','0002_initial','2026-10-30 21:43:56.290823'),(21,'autenticacionApp','0002_passkeys_enrolamiento','2026-10-30 21:43:56.561199'),(22,'listaEsperaApp','0001_initial','2026-10-30 21:43:56.708190'),(23,'notificacionesApp','0001_initial','2026-10-30 21:43:56.792885'),(24,'sessions','0001_initial','2026-10-30 21:43:56.833239');
 /*!40000 ALTER TABLE `django_migrations` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -539,7 +604,7 @@ CREATE TABLE `listaesperaapp_esperapaciente` (
 
 LOCK TABLES `listaesperaapp_esperapaciente` WRITE;
 /*!40000 ALTER TABLE `listaesperaapp_esperapaciente` DISABLE KEYS */;
-INSERT INTO `listaesperaapp_esperapaciente` VALUES (1,1,'2026-10-30 19:26:30.439871',1,'046ec3bf40ff4d4fb77bdcfd76253014'),(2,2,'2026-10-30 19:26:30.440871',1,'c0936ceb29384199b8cf1b2e5f0e1c9d'),(3,3,'2026-10-30 19:26:30.441869',1,'a5a28a867f674f3d93133818334c5d7f');
+INSERT INTO `listaesperaapp_esperapaciente` VALUES (1,1,'2026-10-30 21:43:58.289646',1,'a93ee08cb1014f4fbed1d46eecc73d8b'),(2,2,'2026-10-30 21:43:58.291416',1,'fe9b1a14847247e3b1f763de438e8d75'),(3,3,'2026-10-30 21:43:58.291416',1,'2115ff559650411caf78ac706f7e495e');
 /*!40000 ALTER TABLE `listaesperaapp_esperapaciente` ENABLE KEYS */;
 UNLOCK TABLES;
 

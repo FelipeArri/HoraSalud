@@ -58,6 +58,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'autenticacionApp.sesion.contexto_sesion',
             ],
         },
     },
@@ -128,6 +129,21 @@ SIMPLE_JWT = {
 
 # Seguridad de cookies y cabeceras (RNF-SEC02, OWASP A05).
 SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_AGE = 30 * 60          # la sesion vence a los 30 min (RNF-SEC02)
+SESSION_SAVE_EVERY_REQUEST = True     # ...contados desde el ultimo uso
+LOGIN_URL = 'ingresar'
+
+# Passkeys / WebAuthn (B-06). El navegador solo acepta passkeys en HTTPS o en
+# http://localhost (no en 127.0.0.1). Para el telefono: dominio HTTPS (B-16).
+WEBAUTHN_RP_ID = os.getenv('WEBAUTHN_RP_ID', 'localhost')
+WEBAUTHN_RP_NOMBRE = 'HoraSalud CESFAM'
+WEBAUTHN_ORIGENES = [o.strip() for o in os.getenv(
+    'WEBAUTHN_ORIGENES', 'http://localhost:8000').split(',') if o.strip()]
+CSRF_TRUSTED_ORIGINS = [o for o in WEBAUTHN_ORIGENES if o.startswith('https://')]
+
+# Ingreso solo con RUT + huella SIMULADA. Solo para el prototipo local:
+# se apaga junto con DEBUG y se reemplaza por passkeys en B-06.
+HORASALUD_INGRESO_DEMO = DEBUG and os.getenv('HORASALUD_INGRESO_DEMO', 'True') == 'True'
 X_FRAME_OPTIONS = 'DENY'
 SECURE_CONTENT_TYPE_NOSNIFF = True
 if not DEBUG:

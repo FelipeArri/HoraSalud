@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Elige día y hora{% endblock %}
+{% block ancho_alertas %}medio{% endblock %}
+
+{% block content %}
+<div class="medio">
+  <a class="volver" href="{% url 'pedir_especialidad' %}">{% include 'componentes/icono.html' with n='atras' %}Cambiar especialidad</a>
+  {% include 'agendaApp/_pasos.html' %}
+  <h1 class="mb-1">{{ especialidad.nombre }}</h1>
+  <p class="texto-suave mb-3">Elige el día y luego la hora que te acomode.</p>
+
+  {% if dias %}
+    <div class="dias" role="list">
+      {% for dia in dias %}
+        <a role="listitem" href="?dia={{ dia|date:'Y-m-d' }}" class="dia {% if dia == dia_elegido %}activo{% endif %}"
+           {% if dia == dia_elegido %}aria-current="date"{% endif %}>
+          <small>{{ dia|date:"D" }}</small><strong>{{ dia|date:"j" }}</strong><small>{{ dia|date:"M" }}</small>
+        </a>
+      {% endfor %}
+    </div>
+
+    <div class="tarjeta">
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <strong class="capital">{{ dia_elegido|date:"l j \d\e F" }}</strong>
+        <span class="texto-suave small">{{ bloques|length }} horarios libres</span>
+      </div>
+      <div class="grilla-bloques">
+        {% for bloque in bloques %}
+          <a class="bloque" href="{% url 'pedir_confirmar' bloque.pk %}"
+             aria-label="{{ bloque.hora_inicio|time:'H:i' }} horas">{{ bloque.hora_inicio|time:"H:i" }}</a>
+        {% endfor %}
+      </div>
+      <p class="texto-suave small mt-3 mb-0">Atiende: {{ bloques.0.agenda.profesional.usuario.get_full_name }} · Box {{ bloques.0.agenda.profesional.box_atencion }}</p>
+    </div>
+  {% else %}
+    <div class="tarjeta text-center">
+      <p class="mb-1"><strong>No quedan horas libres en los próximos días.</strong></p>
+      <p class="texto-suave mb-0">Acércate al SOME para quedar en la lista de espera.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

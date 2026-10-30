@@ -1,0 +1,59 @@
+{% load static %}<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="refresh" content="30">
+  <title>Sala de espera · HoraSalud</title>
+  <style>
+    :root { --verde: #1f7a3a; --verde-oscuro: #0f3d1f; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; font-family: system-ui, "Segoe UI", Roboto, Arial, sans-serif;
+           background: var(--verde-oscuro); color: #fff; display: flex; flex-direction: column; }
+    header { display: flex; justify-content: space-between; align-items: center; padding: 1.5vw 3vw;
+             background: var(--verde); font-size: clamp(1rem, 2vw, 2rem); font-weight: 700; }
+    main { flex: 1; display: grid; grid-template-columns: 1.3fr 1fr; gap: 2vw; padding: 2vw 3vw; }
+    @media (max-width: 800px) { main { grid-template-columns: 1fr; } }
+    .actual { background: #fff; color: var(--verde-oscuro); border-radius: 2vw; padding: 3vw; display: flex;
+              flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+    .rotulo { text-transform: uppercase; letter-spacing: .1em; font-weight: 700; font-size: clamp(.9rem, 1.6vw, 1.6rem); opacity: .7; }
+    .codigo { font-size: clamp(3rem, 10vw, 10rem); font-weight: 800; line-height: 1; margin: 1vw 0; }
+    .box { font-size: clamp(1.5rem, 4vw, 4rem); font-weight: 700; background: #e6f4ea; padding: .2em .8em; border-radius: 1em; }
+    .detalle { font-size: clamp(1rem, 2vw, 2rem); margin-top: 1vw; opacity: .8; }
+    ol { list-style: none; margin: 1vw 0 0; padding: 0; }
+    li { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,.08);
+         border-radius: 1vw; padding: 1.2vw 1.5vw; margin-bottom: 1vw; font-size: clamp(1rem, 2.2vw, 2.2rem); }
+    li strong { font-size: 1.15em; }
+    footer { text-align: center; padding: 1vw; opacity: .65; font-size: clamp(.8rem, 1.2vw, 1.2rem); }
+  </style>
+</head>
+<body>
+  <header>
+    <span>HoraSalud · CESFAM Padre Esteban Gumucio</span>
+    <span>{{ ahora|time:"H:i" }}</span>
+  </header>
+  <main>
+    <section class="actual" aria-live="polite">
+      {% if actual %}
+        <div class="rotulo">Próxima atención</div>
+        <div class="codigo">{{ actual.codigo }}</div>
+        <div class="box">Box {{ actual.box }}</div>
+        <div class="detalle">{{ actual.especialidad }} · {{ actual.hora|time:"H:i" }} hrs</div>
+      {% else %}
+        <div class="rotulo">Sin más atenciones agendadas por hoy</div>
+      {% endif %}
+    </section>
+    <section>
+      <div class="rotulo">Siguientes</div>
+      <ol>
+        {% for t in siguientes %}
+          <li><strong>{{ t.codigo }}</strong><span>{{ t.hora|time:"H:i" }} · Box {{ t.box }}</span></li>
+        {% empty %}
+          <li>—</li>
+        {% endfor %}
+      </ol>
+    </section>
+  </main>
+  <footer>Tu código aparece en "Mis horas". Por tu privacidad no mostramos nombres ni RUT.</footer>
+</body>
+</html>

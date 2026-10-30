@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}Pedir hora{% endblock %}
+
+{% block content %}
+<div class="angosto">
+  {% include 'agendaApp/_pasos.html' %}
+  <h1 class="mb-3">¿Qué tipo de atención necesitas?</h1>
+
+  <div class="pestanas" role="tablist">
+    <button type="button" class="activa" role="tab" aria-selected="true" data-panel="panel-mg">Medicina general</button>
+    <button type="button" role="tab" aria-selected="false" data-panel="panel-prog">Programas</button>
+  </div>
+
+  <div id="panel-mg" role="tabpanel">
+    {% for t in medicina_general %}{% include 'agendaApp/_tarjeta_especialidad.html' %}{% empty %}<p class="texto-suave">No hay especialidades.</p>{% endfor %}
+  </div>
+  <div id="panel-prog" role="tabpanel" hidden>
+    {% for t in programas %}{% include 'agendaApp/_tarjeta_especialidad.html' %}{% empty %}<p class="texto-suave">No hay programas.</p>{% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.querySelectorAll('.pestanas button').forEach(function (boton) {
+    boton.addEventListener('click', function () {
+      document.querySelectorAll('.pestanas button').forEach(function (b) {
+        b.classList.toggle('activa', b === boton);
+        b.setAttribute('aria-selected', b === boton);
+        document.getElementById(b.dataset.panel).hidden = b !== boton;
+      });
+    });
+  });
+</script>
+{% endblock %}

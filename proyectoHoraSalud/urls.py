@@ -13,4 +13,6 @@ urlpatterns = [
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     # Paginas
     path('', include('pantallaApp.urls')),
+    path('', include('autenticacionApp.urls')),
+    path('', include('agendaApp.urls')),
 ]

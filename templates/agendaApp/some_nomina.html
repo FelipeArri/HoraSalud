@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}Nómina SOME{% endblock %}
+{% block ancho_alertas %}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-end flex-wrap gap-2 mb-3">
+  <div>
+    <div class="etiqueta-seccion">Panel SOME</div>
+    <h1 class="mb-0">Nómina del <span class="capital">{{ dia|date:"l j \d\e F" }}</span>{% if dia == hoy %} <span class="estado estado-confirmada align-middle">Hoy</span>{% endif %}</h1>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="{% url 'some_enrolar' %}" class="btn btn-verde">{% include 'componentes/icono.html' with n='huella' %} Activar huella de paciente</a>
+    <a href="{% url 'sala_espera' %}" target="_blank" rel="noopener" class="btn btn-borde">{% include 'componentes/icono.html' with n='monitor' %} Pantalla de sala</a>
+  </div>
+</div>
+
+{% if fechas %}
+<div class="dias">
+  {% for f in fechas %}
+    <a href="?dia={{ f|date:'Y-m-d' }}" class="dia {% if f == dia %}activo{% endif %}">
+      <small>{{ f|date:"D" }}</small><strong>{{ f|date:"j" }}</strong><small>{{ f|date:"M" }}</small>
+    </a>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="indicadores">
+  <div class="indicador"><strong>{{ resumen.total }}</strong><span>Horas del día</span></div>
+  <div class="indicador"><strong>{{ resumen.pendientes }}</strong><span>Por atender</span></div>
+  <div class="indicador"><strong>{{ resumen.atendidas }}</strong><span>Atendidas</span></div>
+  <div class="indicador"><strong>{{ resumen.no_show }}</strong><span>No-Show</span></div>
+</div>
+
+<div class="tarjeta p-2 p-md-3">
+  {% if filas %}
+  <table class="tabla-nomina">
+    <thead>
+      <tr><th>Hora</th><th>Paciente</th><th>RUT</th><th>Ficha</th><th>Atención</th><th>Estado</th><th>Acciones</th></tr>
+    </thead>
+    <tbody>
+      {% for fila in filas %}{% with h=fila.hora %}
+      <tr>
+        <td class="hora-celda">{{ h.bloque.hora_inicio|time:"H:i" }}</td>
+        <td><strong>{{ h.paciente.usuario.get_full_name }}</strong></td>
+        <td data-rotulo="RUT" class="text-nowrap">{{ h.paciente.usuario.rut }}</td>
+        <td data-rotulo="Ficha" class="text-nowrap">{{ h.paciente.ficha_clinica_id|default:'—' }}</td>
+        <td data-rotulo="Atención">{{ h.bloque.agenda.especialidad.nombre }} · Box {{ h.bloque.agenda.profesional.box_atencion }}</td>
+        <td><span class="estado estado-{{ h.estado }}">{{ h.get_estado_display }}</span></td>
+        <td>
+          {% if h.estado == 'reservada' or h.estado == 'confirmada' %}
+          <div class="acciones-fila">
+            <form method="post" action="{% url 'some_accion' h.pk 'atendida' %}">{% csrf_token %}
+              <button class="btn btn-verde">Atendida</button>
+            </form>
+            <form method="post" action="{% url 'some_accion' h.pk 'no-show' %}">{% csrf_token %}
+              <button class="btn btn-rojo-borde" {% if not fila.puede_no_show %}disabled title="Se habilita 20 minutos después de la hora"{% endif %}>No-Show</button>
+            </form>
+          </div>
+          {% else %}<span class="texto-suave small">—</span>{% endif %}
+        </td>
+      </tr>
+      {% endwith %}{% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <p class="text-center texto-suave my-4">No hay horas agendadas para este día.</p>
+  {% endif %}
+</div>
+<p class="texto-suave small mt-2">El botón No-Show se habilita 20 minutos después de la hora de atención (RF-05). Las horas canceladas no aparecen en la nómina.</p>
+{% endblock %}

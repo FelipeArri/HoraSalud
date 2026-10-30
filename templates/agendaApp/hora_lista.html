@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block title %}Hora reservada{% endblock %}
+
+{% block content %}
+<div class="angosto text-center">
+  <div class="check-exito">{% include 'componentes/icono.html' with n='check' %}</div>
+  <h1 class="mb-1">¡Tu hora quedó reservada!</h1>
+  <p class="texto-suave mb-4">Te recordaremos un día antes. Si no puedes asistir, cancélala para que otra persona la use.</p>
+
+  <div class="proxima text-start mb-4">
+    {% include 'agendaApp/_tarjeta_hora.html' %}
+  </div>
+
+  <a href="{% url 'mi_inicio' %}" class="btn btn-verde btn-lg w-100 mb-2">Volver al inicio</a>
+  <a href="{% url 'mis_horas' %}" class="btn btn-borde btn-lg w-100">Ver mis horas</a>
+</div>
+{% endblock %}
