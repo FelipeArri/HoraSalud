@@ -1,0 +1,25 @@
+/* Estilos propios de HoraSalud. Letra grande y alto contraste para
+   adultos mayores (RNF-03). */
+
+:root {
+  --verde-cesfam: #2e7d32;
+  --verde-claro: #e2efda;
+}
+
+body {
+  font-size: 1.15rem;
+  background-color: #f7faf6;
+}
+
+.barra-principal {
+  background-color: var(--verde-cesfam);
+}
+
+.tarjeta-opcion {
+  border: 2px solid var(--verde-claro);
+}
+
+.btn,
+.form-control {
+  min-height: 48px; /* objetivo táctil cómodo en el teléfono */
+}

@@ -1,0 +1,5 @@
+# Fin de linea LF en el repositorio, para que Windows (notebook) y Linux
+# (PC antiguo / AWS) no generen diferencias falsas.
+* text=auto eol=lf
+*.png binary
+*.jpg binary

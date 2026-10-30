@@ -1,0 +1,18 @@
+# Entorno virtual (se recrea con: py -3.11 -m venv venv)
+venv/
+
+# Secretos: nunca al repositorio (RNF-SEC02)
+.env
+
+# Archivos generados
+__pycache__/
+*.pyc
+staticfiles/
+media/
+db_pruebas.sqlite3
+*.log
+
+# Sistema operativo y editor
+.DS_Store
+Thumbs.db
+.vscode/

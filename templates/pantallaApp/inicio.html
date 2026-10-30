@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}Inicio{% endblock %}
+
+{% block content %}
+<section class="text-center py-4">
+  <h1 class="display-6 fw-bold">Bienvenido a HoraSalud</h1>
+  <p class="lead">Pide tu hora en el CESFAM Padre Esteban Gumucio sin hacer fila.</p>
+</section>
+
+<div class="row g-3 justify-content-center">
+  <div class="col-12 col-md-5">
+    <div class="card h-100 tarjeta-opcion">
+      <div class="card-body">
+        <h2 class="h5">Soy paciente</h2>
+        <p class="mb-0">Ingresa con tu huella o tu rostro desde el teléfono.</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-md-5">
+    <div class="card h-100 tarjeta-opcion">
+      <div class="card-body">
+        <h2 class="h5">Soy tutor o cuidador</h2>
+        <p class="mb-0">Pide horas por la persona que tienes a cargo.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="text-center text-muted mt-4">El ingreso se habilita en el Sprint 4.</p>
+{% endblock %}
