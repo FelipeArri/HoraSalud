@@ -23,6 +23,17 @@ uno por uno.
 - Las claves reales (de la base y de Django) van solo en el `.env` de cada
   computador, que nunca se sube.
 
+## Datos cifrados (B-07)
+
+El teléfono y los motivos de cancelación se guardan **cifrados** con la clave
+`HORASALUD_CLAVE_CIFRADO` del `.env` de cada computador. Como cada integrante
+tiene su propia clave, en este archivo esos campos van **vacíos**. Para tenerlos
+con datos (cifrados con tu clave), ejecuta después de importar:
+
+```powershell
+python manage.py cargar_datos_demo --limpiar
+```
+
 ## Las fechas se desactualizan
 
 Las agendas corresponden a los días hábiles siguientes a la fecha en que se

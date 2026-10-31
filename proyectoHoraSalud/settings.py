@@ -155,6 +155,13 @@ if HORASALUD_DOMINIO_PUBLICO:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     USE_X_FORWARDED_HOST = True
 
+# B-07: clave para cifrar datos sensibles en la base (telefono, motivos).
+# Generar con: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+# Sin ella, solo en desarrollo, se deriva de SECRET_KEY. Si se pierde, esos datos no se pueden leer.
+HORASALUD_CLAVE_CIFRADO = os.getenv('HORASALUD_CLAVE_CIFRADO', '')
+if not HORASALUD_CLAVE_CIFRADO and not DEBUG:
+    raise RuntimeError('Falta HORASALUD_CLAVE_CIFRADO en el archivo .env (ver .env.example).')
+
 # Ingreso sin huella (modo demostracion). Solo con DEBUG y SOLO desde
 # localhost: nunca desde el dominio publico del tunel (ver autenticacionApp.passkeys).
 HORASALUD_INGRESO_DEMO = DEBUG and os.getenv('HORASALUD_INGRESO_DEMO', 'True') == 'True'

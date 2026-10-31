@@ -51,6 +51,13 @@
         <span class="flecha">{% include 'componentes/icono.html' with n='flecha' %}</span>
       </a>
     </div>
+    <div class="col-12 col-md-6">
+      <a class="tarjeta-accion h-100" href="{% url 'mis_datos' %}">
+        <span class="icono-caja">{% include 'componentes/icono.html' with n='escudo' %}</span>
+        <span><span class="titulo">Mis datos y privacidad</span><span class="detalle">Ver, descargar o corregir tus datos</span></span>
+        <span class="flecha">{% include 'componentes/icono.html' with n='flecha' %}</span>
+      </a>
+    </div>
     {% if es_tutor %}
     <div class="col-12 col-md-6">
       <a class="tarjeta-accion h-100" href="{% url 'elegir_paciente' %}">

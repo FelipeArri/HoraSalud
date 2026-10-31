@@ -41,6 +41,9 @@ def requiere_paciente(vista):
     def envoltura(request, *args, **kwargs):
         if not request.user.is_authenticated:
             return redirect('ingresar')
+        from .privacidad import consentimiento_vigente  # evita importacion circular
+        if request.user.tipo_usuario in (Usuario.Tipo.PACIENTE, Usuario.Tipo.TUTOR) and                 not consentimiento_vigente(request.user):
+            return redirect('aceptar_politica')  # B-07: politica nueva o retirada
         paciente = paciente_activo(request)
         if paciente is None:
             if request.user.tipo_usuario == Usuario.Tipo.TUTOR:

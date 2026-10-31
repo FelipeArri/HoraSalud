@@ -18,7 +18,8 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from agendaApp.models import Agenda, BloqueHorario, Especialidad, Hora
-from autenticacionApp.models import Paciente, Profesional, Sector
+from autenticacionApp.models import Consentimiento, Paciente, Profesional, Sector
+from autenticacionApp.privacidad import VERSION_POLITICA
 from autenticacionApp.validators import calcular_dv
 from listaEsperaApp.models import EsperaPaciente
 
@@ -96,6 +97,11 @@ class Command(BaseCommand):
                 'tutor': tutores[i] if i < len(tutores) else None,  # RF-03: dos pacientes con tutor
             })
             pacientes.append(paciente)
+
+        # B-07: los usuarios demo simulan personas ya enroladas que aceptaron la politica
+        for persona in tutores + [p.usuario for p in pacientes]:
+            Consentimiento.objects.get_or_create(usuario=persona, version=VERSION_POLITICA,
+                                                 defaults={'aceptado': True})
 
         bloques = []
         for dia in proximos_dias_habiles(5):

@@ -16,7 +16,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from . import passkeys
+from . import passkeys, privacidad
 from .forms import EnrolamientoForm, IngresoRutForm
 from .models import CodigoEnrolamiento, Usuario
 from .sesion import CLAVE_PACIENTE, es_some, pacientes_a_cargo, requiere_some
@@ -120,7 +120,7 @@ def enrolar(request):
             form.add_error('codigo', str(error))
         else:
             request.session[CLAVE_ENROLANDO] = codigo.pk
-            return redirect('enrolar_huella')
+            return redirect('enrolar_consentimiento')  # B-07: primero acepta la politica
     return render(request, 'autenticacionApp/enrolar.html', {'form': form})
 
 
@@ -136,6 +136,8 @@ def enrolar_huella(request):
     if codigo is None:
         messages.warning(request, 'Escribe tu RUT y el código que te entregó el SOME.')
         return redirect('enrolar')
+    if not privacidad.consentimiento_vigente(codigo.usuario):
+        return redirect('enrolar_consentimiento')
     return render(request, 'autenticacionApp/enrolar_huella.html', {
         'usuario': codigo.usuario, 'rp_id': passkeys.rp_id_para(request)})
 
@@ -145,6 +147,8 @@ def passkey_registro_opciones(request):
     codigo = _codigo_en_curso(request)
     if codigo is None:
         return _error_json('El código venció. Pide uno nuevo en el SOME.', 403)
+    if not privacidad.consentimiento_vigente(codigo.usuario):
+        return _error_json('Primero debes aceptar la política de privacidad.', 403)
     return JsonResponse({'ok': True, 'opciones': passkeys.opciones_registro(request, codigo.usuario)})
 
 
@@ -192,6 +196,8 @@ def elegir_paciente(request):
     """RF-03: el tutor elige a quien le pedira la hora."""
     if not request.user.is_authenticated or request.user.tipo_usuario != Usuario.Tipo.TUTOR:
         return redirect('ingresar')
+    if not privacidad.consentimiento_vigente(request.user):
+        return redirect('aceptar_politica')
     a_cargo = pacientes_a_cargo(request.user)
     if request.method == 'POST':
         elegido = a_cargo.filter(pk=request.POST.get('paciente')).first()

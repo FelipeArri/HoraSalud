@@ -7,6 +7,8 @@ import uuid
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+from proyectoHoraSalud.cifrado import CampoCifrado
+
 from .validators import normalizar_rut, validar_rut
 
 
@@ -32,7 +34,7 @@ class Usuario(AbstractUser):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     rut = models.CharField(max_length=12, unique=True, null=True, blank=True, validators=[validar_rut])
-    telefono = models.CharField(max_length=20, blank=True)
+    telefono = CampoCifrado(blank=True, largo_maximo=20)  # cifrado en reposo (B-07)
     tipo_usuario = models.CharField(max_length=20, choices=Tipo.choices, default=Tipo.PACIENTE)
 
     def save(self, *args, **kwargs):
@@ -114,3 +116,57 @@ class CodigoEnrolamiento(models.Model):
 
     def __str__(self):
         return f'{self.usuario} - {"usado" if self.usado_en else "vigente"}'
+
+
+class Consentimiento(models.Model):
+    """
+    B-07 · Ley 21.719: registro de que la persona aceptó (o rechazó) la política de
+    privacidad de HoraSalud, con su versión y fecha. Si la política cambia de versión,
+    se vuelve a pedir. Retirar el consentimiento queda registrado, no se borra.
+    """
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='consentimientos')
+    version = models.CharField('versión de la política', max_length=10)
+    aceptado = models.BooleanField()
+    fecha = models.DateTimeField(auto_now_add=True)
+    retirado_en = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'consentimiento'
+        verbose_name_plural = 'Consentimientos'
+        ordering = ['-fecha']
+
+    def __str__(self):
+        estado = 'retirado' if self.retirado_en else ('aceptado' if self.aceptado else 'rechazado')
+        return f'{self.usuario} · v{self.version} · {estado}'
+
+
+class SolicitudDerechos(models.Model):
+    """B-07 · Derechos ARCO+ (Ley 21.719): la persona pide rectificar, suprimir, etc. Lo resuelve el SOME."""
+
+    class Tipo(models.TextChoices):
+        RECTIFICACION = 'rectificacion', 'Corregir un dato (rectificación)'
+        SUPRESION = 'supresion', 'Eliminar mis datos de la app (supresión)'
+        OPOSICION = 'oposicion', 'No quiero recibir avisos (oposición)'
+        BLOQUEO = 'bloqueo', 'Bloquear temporalmente mis datos (bloqueo)'
+        OTRO = 'otro', 'Otra consulta sobre mis datos'
+
+    class Estado(models.TextChoices):
+        PENDIENTE = 'pendiente', 'Pendiente'
+        RESUELTA = 'resuelta', 'Resuelta'
+
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='solicitudes_derechos')
+    tipo = models.CharField(max_length=20, choices=Tipo.choices)
+    detalle = CampoCifrado(blank=True, largo_maximo=500)
+    estado = models.CharField(max_length=10, choices=Estado.choices, default=Estado.PENDIENTE)
+    creada_en = models.DateTimeField(auto_now_add=True)
+    respuesta = CampoCifrado(blank=True, largo_maximo=500)
+    resuelta_por = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    resuelta_en = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'solicitud de derechos'
+        verbose_name_plural = 'Solicitudes de derechos (ARCO+)'
+        ordering = ['estado', 'creada_en']
+
+    def __str__(self):
+        return f'{self.usuario} · {self.get_tipo_display()} · {self.get_estado_display()}'
