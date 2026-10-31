@@ -9,6 +9,7 @@ from django.db.models.signals import post_delete
 from django.dispatch import receiver
 
 from autenticacionApp.models import Paciente, Profesional
+from proyectoHoraSalud.cifrado import CampoCifrado
 
 
 class Especialidad(models.Model):
@@ -78,7 +79,7 @@ class Hora(models.Model):
                                          editable=False, related_name='hora_vigente')
     paciente = models.ForeignKey(Paciente, on_delete=models.PROTECT, related_name='horas')
     estado = models.CharField(max_length=12, choices=Estado.choices, default=Estado.RESERVADA)
-    motivo_cancelacion = models.CharField(max_length=200, blank=True)
+    motivo_cancelacion = CampoCifrado(blank=True, largo_maximo=200)  # cifrado en reposo (B-07)
     creado_en = models.DateTimeField(auto_now_add=True)
 
     class Meta:

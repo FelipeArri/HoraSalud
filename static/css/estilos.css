@@ -291,3 +291,12 @@ span.capital, strong.capital { display: inline-block; }
 .capital::first-letter { text-transform: uppercase; }
 .barra-menu a.btn-verde { background: var(--verde); color: #fff; }
 .barra-menu a.btn-verde:hover { background: var(--verde-oscuro); }
+
+/* ---------- B-07: política de privacidad ---------- */
+.politica h3 { font-size: 1.05rem; font-weight: 700; margin: 1.1rem 0 .35rem; color: var(--verde-oscuro); }
+.politica h3:first-of-type { margin-top: 0; }
+.politica ul { padding-left: 1.2rem; margin-bottom: .5rem; }
+.politica li { margin-bottom: .2rem; }
+.caja-politica { max-height: 55vh; overflow-y: auto; }
+a.chip-usuario:hover { background: var(--verde-borde); color: var(--verde-oscuro); }
+.pie a { color: var(--texto-suave); }

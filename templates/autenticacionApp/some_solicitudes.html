@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Solicitudes de datos{% endblock %}
+{% block ancho_alertas %}medio{% endblock %}
+
+{% block content %}
+<div class="medio">
+  <div class="etiqueta-seccion">Panel SOME</div>
+  <h1 class="mb-1">Solicitudes sobre datos personales</h1>
+  <p class="texto-suave mb-3">Derechos ARCO+ (Ley 21.719). Las correcciones se hacen en el sistema clínico del CESFAM y luego se marca la solicitud como resuelta.</p>
+
+  <div class="etiqueta-seccion mb-2">Pendientes ({{ pendientes|length }})</div>
+  {% for s in pendientes %}
+    <div class="tarjeta">
+      <div class="d-flex justify-content-between flex-wrap gap-2">
+        <strong>{{ s.usuario.get_full_name }} · {{ s.usuario.rut }}</strong>
+        <span class="texto-suave small">{{ s.creada_en|date:"d-m-Y H:i" }}</span>
+      </div>
+      <div class="mt-1"><span class="estado estado-reservada">{{ s.get_tipo_display }}</span></div>
+      {% if s.detalle %}<p class="mt-2 mb-2">{{ s.detalle }}</p>{% endif %}
+      <form method="post" class="mt-2">
+        {% csrf_token %}
+        <input type="hidden" name="solicitud" value="{{ s.pk }}">
+        <input type="text" name="respuesta" class="form-control mb-2" maxlength="500" placeholder="Respuesta para la persona (por ejemplo: teléfono corregido en el sistema clínico)">
+        <button class="btn btn-verde">Marcar como resuelta</button>
+      </form>
+    </div>
+  {% empty %}
+    <div class="tarjeta text-center texto-suave">No hay solicitudes pendientes.</div>
+  {% endfor %}
+
+  {% if resueltas %}
+  <div class="etiqueta-seccion mt-4 mb-2">Resueltas recientes</div>
+  <div class="tarjeta p-0">
+    {% for s in resueltas %}
+      <div class="px-3 py-2 small {% if not forloop.last %}border-bottom{% endif %}">
+        <strong>{{ s.usuario.get_full_name }}</strong> · {{ s.get_tipo_display }} · resuelta por {{ s.resuelta_por.get_full_name|default:s.resuelta_por.username }} el {{ s.resuelta_en|date:"d-m-Y" }}
+      </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

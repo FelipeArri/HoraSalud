@@ -26,12 +26,20 @@
           {% if es_some %}
             <a href="{% url 'some_nomina' %}" class="d-none d-md-inline-flex {% if ruta == 'some_nomina' %}activo{% endif %}">Nómina</a>
             <a href="{% url 'some_enrolar' %}" class="d-none d-md-inline-flex {% if ruta == 'some_enrolar' %}activo{% endif %}">Activar huella</a>
+            <a href="{% url 'some_solicitudes' %}" class="d-none d-md-inline-flex {% if ruta == 'some_solicitudes' %}activo{% endif %}">Solicitudes</a>
             <a href="{% url 'sala_espera' %}" class="d-none d-md-inline-flex" target="_blank" rel="noopener">Pantalla sala</a>
           {% endif %}
+          {% if user.tipo_usuario == 'paciente' or user.tipo_usuario == 'tutor' %}
+          <a href="{% url 'mis_datos' %}" class="chip-usuario ms-1" title="Mis datos y privacidad">
+            <span class="avatar">{{ user.first_name|default:user.username|first|upper }}</span>
+            <span class="d-none d-sm-inline">{{ user.first_name|default:user.username }}</span>
+          </a>
+          {% else %}
           <span class="chip-usuario ms-1" title="{{ user.get_full_name|default:user.username }}">
             <span class="avatar">{{ user.first_name|default:user.username|first|upper }}</span>
             <span class="d-none d-sm-inline">{{ user.first_name|default:user.username }}</span>
           </span>
+          {% endif %}
           <form method="post" action="{% url 'salir' %}" class="d-none d-md-block">{% csrf_token %}
             <button type="submit" title="Cerrar sesión">{% include 'componentes/icono.html' with n='salir' %}<span class="visually-hidden">Salir</span></button>
           </form>
@@ -59,7 +67,7 @@
     {% block content %}{% endblock %}
   </main>
 
-  <footer class="pie">Prototipo académico · INACAP · Solo datos ficticios</footer>
+  <footer class="pie">Prototipo académico · INACAP · Solo datos ficticios · <a href="{% url 'politica' %}">Privacidad</a></footer>
 
   {% if user.is_authenticated %}
   <nav class="menu-inferior" aria-label="Menú del teléfono">
