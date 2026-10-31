@@ -76,6 +76,8 @@ class CredencialPasskey(models.Model):
     """
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='passkeys')
     credencial_id = models.CharField(max_length=255, unique=True)  # base64url
+    # Dominio donde se creo (localhost o el de ngrok): una passkey solo sirve en su dominio
+    rp_id = models.CharField('dominio', max_length=253, default='localhost')
     clave_publica = models.BinaryField()
     contador_firmas = models.PositiveBigIntegerField(default=0)
     dispositivo = models.CharField(max_length=120, blank=True)

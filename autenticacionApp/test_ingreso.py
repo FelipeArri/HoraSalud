@@ -11,6 +11,7 @@ from .models import Paciente, Usuario
 @override_settings(HORASALUD_INGRESO_DEMO=True)
 class IngresoTests(TestCase):
     def setUp(self):
+        self.client.defaults['HTTP_HOST'] = 'localhost'  # el modo demo solo existe en el notebook
         call_command('cargar_datos_demo', stdout=StringIO())
         self.paciente = Paciente.objects.filter(tutor__isnull=True).select_related('usuario').first()
 
@@ -63,3 +64,15 @@ class IngresoTests(TestCase):
         self.client.force_login(self.paciente.usuario)
         self.client.post(reverse('salir'))
         self.assertRedirects(self.client.get(reverse('mi_inicio')), reverse('ingresar'))
+
+    def test_def03_paginas_privadas_no_quedan_en_cache(self):
+        # DEF-03: al ir "atras" tras cerrar sesion no deben verse datos del paciente
+        self.client.force_login(self.paciente.usuario)
+        respuesta = self.client.get(reverse('mi_inicio'))
+        self.assertIn('no-store', respuesta['Cache-Control'])
+        salida = self.client.post(reverse('salir'))
+        self.assertEqual(salida['Clear-Site-Data'], '"cache"')
+        self.assertRedirects(self.client.get(reverse('mi_inicio')), reverse('ingresar'))
+
+    def test_portada_publica_si_se_puede_guardar(self):
+        self.assertNotIn('no-store', self.client.get(reverse('inicio')).get('Cache-Control', ''))

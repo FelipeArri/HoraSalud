@@ -27,6 +27,8 @@ from webauthn.helpers.structs import (AuthenticatorSelectionCriteria, PublicKeyC
 from .models import CodigoEnrolamiento, CredencialPasskey, Usuario
 
 CLAVE_RETO = 'webauthn_reto'
+CLAVE_RP = 'webauthn_rp'
+HOSTS_LOCALES = ('localhost', '127.0.0.1')
 VIGENCIA_CODIGO = timedelta(minutes=30)
 
 
@@ -70,36 +72,68 @@ def validar_codigo(usuario, codigo):
     return vigente
 
 
+# ---------- Dominio desde el que se usa el sistema ----------
+
+def _host(request):
+    return request.get_host().split(':')[0].lower()
+
+
+def rp_id_para(request):
+    """localhost en el notebook o el dominio HTTPS del tunel en el telefono (B-16)."""
+    host = _host(request)
+    return host if host in settings.WEBAUTHN_RP_IDS else settings.WEBAUTHN_RP_IDS[0]
+
+
+def modo_demo_permitido(request):
+    """El ingreso sin huella solo existe en el notebook, nunca desde internet.
+    Todo lo que llega por un tunel trae cabeceras X-Forwarded-*: eso basta para negarlo,
+    aunque alguien intente hacerse pasar por "localhost"."""
+    paso_por_tunel = any(k.startswith('HTTP_X_FORWARDED_') for k in request.META)
+    return settings.HORASALUD_INGRESO_DEMO and not paso_por_tunel and _host(request) in HOSTS_LOCALES
+
+
+def url_publica(request, ruta):
+    if settings.HORASALUD_DOMINIO_PUBLICO:
+        return f'https://{settings.HORASALUD_DOMINIO_PUBLICO}{ruta}'
+    return request.build_absolute_uri(ruta)
+
+
 # ---------- WebAuthn ----------
-
-def _origenes():
-    return settings.WEBAUTHN_ORIGENES
-
 
 def _descriptor(credencial):
     return PublicKeyCredentialDescriptor(id=base64url_to_bytes(credencial.credencial_id))
 
 
+def passkeys_del_dominio(request, usuario):
+    return usuario.passkeys.filter(rp_id=rp_id_para(request))
+
+
+def _guardar_reto(request, opciones):
+    request.session[CLAVE_RETO] = bytes_to_base64url(opciones.challenge)
+    request.session[CLAVE_RP] = rp_id_para(request)
+
+
 def opciones_registro(request, usuario):
     opciones = generate_registration_options(
-        rp_id=settings.WEBAUTHN_RP_ID,
+        rp_id=rp_id_para(request),
         rp_name=settings.WEBAUTHN_RP_NOMBRE,
         user_id=usuario.id.bytes,
         user_name=usuario.rut or usuario.username,
         user_display_name=usuario.get_full_name() or usuario.username,
-        exclude_credentials=[_descriptor(c) for c in usuario.passkeys.all()],
+        exclude_credentials=[_descriptor(c) for c in passkeys_del_dominio(request, usuario)],
         authenticator_selection=AuthenticatorSelectionCriteria(
             resident_key=ResidentKeyRequirement.PREFERRED,
             user_verification=UserVerificationRequirement.REQUIRED,  # exige huella, rostro o PIN
         ),
     )
-    request.session[CLAVE_RETO] = bytes_to_base64url(opciones.challenge)
+    _guardar_reto(request, opciones)
     return options_to_json(opciones)
 
 
 def _reto(request):
     reto = request.session.pop(CLAVE_RETO, None)  # cada reto sirve una sola vez
-    if not reto:
+    rp = request.session.pop(CLAVE_RP, None)
+    if not reto or rp != rp_id_para(request):
         raise PasskeyError('La solicitud venció. Vuelve a intentarlo.')
     return base64url_to_bytes(reto)
 
@@ -109,8 +143,8 @@ def verificar_registro(request, usuario, credencial_json, dispositivo=''):
         verificado = verify_registration_response(
             credential=credencial_json,
             expected_challenge=_reto(request),
-            expected_rp_id=settings.WEBAUTHN_RP_ID,
-            expected_origin=_origenes(),
+            expected_rp_id=rp_id_para(request),
+            expected_origin=settings.WEBAUTHN_ORIGENES,
             require_user_verification=True,
         )
     except PasskeyError:
@@ -119,6 +153,7 @@ def verificar_registro(request, usuario, credencial_json, dispositivo=''):
         raise PasskeyError('No pudimos registrar tu huella. Inténtalo otra vez.') from error
     return CredencialPasskey.objects.create(
         usuario=usuario,
+        rp_id=rp_id_para(request),
         credencial_id=bytes_to_base64url(verificado.credential_id),
         clave_publica=verificado.credential_public_key,
         contador_firmas=verificado.sign_count,
@@ -128,11 +163,11 @@ def verificar_registro(request, usuario, credencial_json, dispositivo=''):
 
 def opciones_ingreso(request, usuario):
     opciones = generate_authentication_options(
-        rp_id=settings.WEBAUTHN_RP_ID,
-        allow_credentials=[_descriptor(c) for c in usuario.passkeys.all()],
+        rp_id=rp_id_para(request),
+        allow_credentials=[_descriptor(c) for c in passkeys_del_dominio(request, usuario)],
         user_verification=UserVerificationRequirement.REQUIRED,
     )
-    request.session[CLAVE_RETO] = bytes_to_base64url(opciones.challenge)
+    _guardar_reto(request, opciones)
     return options_to_json(opciones)
 
 
@@ -142,15 +177,15 @@ def verificar_ingreso(request, usuario, credencial_json):
     except (ValueError, KeyError, TypeError):
         raise PasskeyError('Respuesta inválida del dispositivo.')
     # Solo se aceptan passkeys de ESTE usuario (OWASP A01)
-    credencial = usuario.passkeys.filter(credencial_id=credencial_id).first()
+    credencial = passkeys_del_dominio(request, usuario).filter(credencial_id=credencial_id).first()
     if credencial is None:
         raise PasskeyError('Esta huella no está registrada para tu RUT.')
     try:
         verificado = verify_authentication_response(
             credential=credencial_json,
             expected_challenge=_reto(request),
-            expected_rp_id=settings.WEBAUTHN_RP_ID,
-            expected_origin=_origenes(),
+            expected_rp_id=rp_id_para(request),
+            expected_origin=settings.WEBAUTHN_ORIGENES,
             credential_public_key=bytes(credencial.clave_publica),
             credential_current_sign_count=credencial.contador_firmas,
             require_user_verification=True,

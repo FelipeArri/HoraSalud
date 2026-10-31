@@ -43,6 +43,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'proyectoHoraSalud.middleware.SinCacheParaSesionMiddleware',  # DEF-03
 ]
 
 ROOT_URLCONF = 'proyectoHoraSalud.urls'
@@ -134,15 +135,28 @@ SESSION_SAVE_EVERY_REQUEST = True     # ...contados desde el ultimo uso
 LOGIN_URL = 'ingresar'
 
 # Passkeys / WebAuthn (B-06). El navegador solo acepta passkeys en HTTPS o en
-# http://localhost (no en 127.0.0.1). Para el telefono: dominio HTTPS (B-16).
-WEBAUTHN_RP_ID = os.getenv('WEBAUTHN_RP_ID', 'localhost')
+# http://localhost (no en 127.0.0.1).
 WEBAUTHN_RP_NOMBRE = 'HoraSalud CESFAM'
-WEBAUTHN_ORIGENES = [o.strip() for o in os.getenv(
-    'WEBAUTHN_ORIGENES', 'http://localhost:8000').split(',') if o.strip()]
-CSRF_TRUSTED_ORIGINS = [o for o in WEBAUTHN_ORIGENES if o.startswith('https://')]
+WEBAUTHN_RP_IDS = ['localhost']
+WEBAUTHN_ORIGENES = ['http://localhost:8000']
 
-# Ingreso solo con RUT + huella SIMULADA. Solo para el prototipo local:
-# se apaga junto con DEBUG y se reemplaza por passkeys en B-06.
+# B-16: dominio HTTPS del tunel de VS Code (Port Forwarding / Dev Tunnels) para
+# usar la huella del telefono. Ej.: HORASALUD_DOMINIO_PUBLICO=abc123-8000.brs.devtunnels.ms
+HORASALUD_DOMINIO_PUBLICO = os.getenv('HORASALUD_DOMINIO_PUBLICO', '').strip().lower()
+if HORASALUD_DOMINIO_PUBLICO:
+    WEBAUTHN_RP_IDS.append(HORASALUD_DOMINIO_PUBLICO)
+    WEBAUTHN_ORIGENES.append(f'https://{HORASALUD_DOMINIO_PUBLICO}')
+    ALLOWED_HOSTS.append(HORASALUD_DOMINIO_PUBLICO)
+    # El tunel de VS Code reescribe la cabecera Origin a http://localhost:8000.
+    # El token CSRF de cada formulario se sigue exigiendo igual (OWASP A01).
+    CSRF_TRUSTED_ORIGINS = [f'https://{HORASALUD_DOMINIO_PUBLICO}', 'http://localhost:8000']
+    # El tunel recibe HTTPS y lo entrega por HTTP al notebook. Estas cabeceras avisan
+    # que la conexion original era segura y con que dominio llego el celular.
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    USE_X_FORWARDED_HOST = True
+
+# Ingreso sin huella (modo demostracion). Solo con DEBUG y SOLO desde
+# localhost: nunca desde el dominio publico del tunel (ver autenticacionApp.passkeys).
 HORASALUD_INGRESO_DEMO = DEBUG and os.getenv('HORASALUD_INGRESO_DEMO', 'True') == 'True'
 X_FRAME_OPTIONS = 'DENY'
 SECURE_CONTENT_TYPE_NOSNIFF = True
