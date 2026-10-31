@@ -4,7 +4,7 @@ from datetime import timedelta
 from io import StringIO
 
 from django.core.management import call_command
-from django.test import TestCase, override_settings
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -13,10 +13,16 @@ from .autenticador_simulado import AutenticadorSimulado
 from .models import CodigoEnrolamiento, CredencialPasskey, Usuario
 
 
-@override_settings(WEBAUTHN_RP_ID='localhost', WEBAUTHN_ORIGENES=['http://localhost:8000'],
-                   HORASALUD_INGRESO_DEMO=False)
+DOMINIO = 'abc123-8000.brs.devtunnels.ms'
+
+
+@override_settings(WEBAUTHN_RP_IDS=['localhost', DOMINIO],
+                   WEBAUTHN_ORIGENES=['http://localhost:8000', f'https://{DOMINIO}'],
+                   ALLOWED_HOSTS=['localhost', DOMINIO], HORASALUD_INGRESO_DEMO=False,
+                   USE_X_FORWARDED_HOST=True)
 class PasskeyTests(TestCase):
     def setUp(self):
+        self.client.defaults['HTTP_HOST'] = 'localhost'
         call_command('cargar_datos_demo', stdout=StringIO())
         self.paciente = Usuario.objects.filter(tipo_usuario=Usuario.Tipo.PACIENTE).order_by('rut').first()
         self.some = Usuario.objects.get(tipo_usuario=Usuario.Tipo.ADMINISTRATIVO)
@@ -157,3 +163,71 @@ class PasskeyTests(TestCase):
     def test_paciente_no_genera_codigos(self):
         self.client.force_login(self.paciente)
         self.assertRedirects(self.client.get(reverse('some_enrolar')), reverse('inicio'))
+
+
+    # --- B-16: dominio HTTPS del tunel (telefono) ---
+    def usar_dominio_publico(self):
+        self.client.defaults.update(HTTP_HOST=DOMINIO, HTTP_X_FORWARDED_PROTO='https')
+
+    def test_telefono_enrola_e_ingresa_por_el_dominio_publico(self):
+        self.usar_dominio_publico()
+        telefono = AutenticadorSimulado(rp_id=DOMINIO, origen=f'https://{DOMINIO}')
+        self.assertEqual(self.enrolar(telefono).status_code, 200)
+        self.assertEqual(CredencialPasskey.objects.get().rp_id, DOMINIO)
+        self.client.post(reverse('salir'))
+        self.assertEqual(self.ingresar(telefono).status_code, 200)
+
+    def test_passkey_del_notebook_no_sirve_en_el_dominio_publico(self):
+        self.enrolar(AutenticadorSimulado())  # creada en localhost
+        self.client.post(reverse('salir'))
+        self.usar_dominio_publico()
+        self.client.post(reverse('ingresar'), {'rut': self.paciente.rut})
+        self.assertContains(self.client.get(reverse('verificar')), 'Tengo un código del SOME')
+        self.assertEqual(self.post_json('passkey_ingreso_opciones').status_code, 403)
+
+    def test_firma_hecha_para_otro_dominio_se_rechaza(self):
+        self.usar_dominio_publico()
+        codigo = passkeys.generar_codigo(self.paciente, self.some)
+        self.client.post(reverse('enrolar'), {'rut': self.paciente.rut, 'codigo': codigo})
+        opciones = self.post_json('passkey_registro_opciones').json()['opciones']
+        falso = AutenticadorSimulado(rp_id='localhost', origen=f'https://{DOMINIO}')
+        self.assertEqual(self.post_json('passkey_registro_verificar', falso.registrar(opciones)).status_code, 400)
+
+    @override_settings(HORASALUD_INGRESO_DEMO=True)
+    def test_modo_demo_bloqueado_desde_internet(self):
+        self.usar_dominio_publico()
+        self.client.post(reverse('ingresar'), {'rut': self.paciente.rut})
+        self.assertNotContains(self.client.get(reverse('verificar')), 'modo demostración')
+        self.assertEqual(self.client.post(reverse('verificar')).status_code, 404)
+
+    @override_settings(HORASALUD_INGRESO_DEMO=True)
+    def test_tunel_que_reescribe_host_usa_el_dominio_publico(self):
+        # Dev Tunnels puede entregar Host=localhost y el dominio real en X-Forwarded-Host
+        self.client.defaults.update(HTTP_HOST='localhost:8000', HTTP_X_FORWARDED_HOST=DOMINIO,
+                                    HTTP_X_FORWARDED_PROTO='https')
+        telefono = AutenticadorSimulado(rp_id=DOMINIO, origen=f'https://{DOMINIO}')
+        self.assertEqual(self.enrolar(telefono).status_code, 200)
+        self.assertEqual(CredencialPasskey.objects.get().rp_id, DOMINIO)
+
+    @override_settings(HORASALUD_INGRESO_DEMO=True)
+    def test_modo_demo_sigue_en_el_notebook(self):
+        self.client.post(reverse('ingresar'), {'rut': self.paciente.rut})
+        self.assertRedirects(self.client.post(reverse('verificar')), reverse('mi_inicio'))
+
+    @override_settings(HORASALUD_INGRESO_DEMO=True)
+    def test_no_se_puede_falsificar_localhost_desde_el_tunel(self):
+        self.client.defaults.update(HTTP_X_FORWARDED_HOST='localhost', HTTP_X_FORWARDED_FOR='203.0.113.9')
+        self.client.post(reverse('ingresar'), {'rut': self.paciente.rut})
+        self.assertEqual(self.client.post(reverse('verificar')).status_code, 404)
+
+    @override_settings(CSRF_TRUSTED_ORIGINS=[f'https://{DOMINIO}', 'http://localhost:8000'],
+                       SECURE_PROXY_SSL_HEADER=('HTTP_X_FORWARDED_PROTO', 'https'))
+    def test_formulario_por_tunel_que_reescribe_origin(self):
+        # Defecto DEF-02 (B-16): el tunel cambia Origin a localhost y Django devolvia 403 CSRF
+        cliente = Client(enforce_csrf_checks=True, HTTP_HOST='localhost:8000', HTTP_X_FORWARDED_HOST=DOMINIO,
+                         HTTP_X_FORWARDED_PROTO='https', HTTP_ORIGIN='http://localhost:8000')
+        token = cliente.get(reverse('ingresar')).cookies['csrftoken'].value
+        respuesta = cliente.post(reverse('ingresar'), {'rut': self.paciente.rut, 'csrfmiddlewaretoken': token})
+        self.assertRedirects(respuesta, reverse('verificar'), fetch_redirect_response=False)
+        # Sin token CSRF se sigue rechazando
+        self.assertEqual(cliente.post(reverse('ingresar'), {'rut': self.paciente.rut}).status_code, 403)

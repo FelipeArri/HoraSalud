@@ -8,7 +8,6 @@ Enrolamiento: el SOME valida la cedula en persona y entrega un codigo de un solo
 Modo demostracion (solo con DJANGO_DEBUG=True): permite entrar sin passkey
 para probar el resto del sistema con los usuarios ficticios.
 """
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.http import Http404, JsonResponse
@@ -73,22 +72,22 @@ def verificar(request):
         return redirect('ingresar')
     if request.method == 'POST':
         # Boton "entrar sin huella": SOLO en modo demostracion
-        if not settings.HORASALUD_INGRESO_DEMO:
+        if not passkeys.modo_demo_permitido(request):
             raise Http404
         _iniciar_sesion(request, usuario)
         return redirect(_destino(usuario))
     return render(request, 'autenticacionApp/verificar.html', {
         'usuario': usuario,
-        'tiene_passkey': usuario.passkeys.exists(),
-        'modo_demo': settings.HORASALUD_INGRESO_DEMO,
-        'rp_id': settings.WEBAUTHN_RP_ID,
+        'tiene_passkey': passkeys.passkeys_del_dominio(request, usuario).exists(),
+        'modo_demo': passkeys.modo_demo_permitido(request),
+        'rp_id': passkeys.rp_id_para(request),
     })
 
 
 @require_POST
 def passkey_ingreso_opciones(request):
     usuario = _usuario_pendiente(request)
-    if usuario is None or not usuario.passkeys.exists():
+    if usuario is None or not passkeys.passkeys_del_dominio(request, usuario).exists():
         return _error_json('Primero escribe tu RUT.', 403)
     return JsonResponse({'ok': True, 'opciones': passkeys.opciones_ingreso(request, usuario)})
 
@@ -138,7 +137,7 @@ def enrolar_huella(request):
         messages.warning(request, 'Escribe tu RUT y el código que te entregó el SOME.')
         return redirect('enrolar')
     return render(request, 'autenticacionApp/enrolar_huella.html', {
-        'usuario': codigo.usuario, 'rp_id': settings.WEBAUTHN_RP_ID})
+        'usuario': codigo.usuario, 'rp_id': passkeys.rp_id_para(request)})
 
 
 @require_POST
@@ -183,6 +182,7 @@ def some_enrolar(request):
             messages.error(request, 'Confirma que revisaste la cédula de identidad en persona.')
     return render(request, 'autenticacionApp/some_enrolar.html', {
         'form': form, 'usuario': usuario, 'codigo': codigo,
+        'url_activar': passkeys.url_publica(request, reverse('enrolar')),
         'vigencia_min': int(passkeys.VIGENCIA_CODIGO.total_seconds() // 60)})
 
 
@@ -206,4 +206,6 @@ def elegir_paciente(request):
 def salir(request):
     logout(request)  # borra la sesion completa
     messages.info(request, 'Cerraste tu sesión de forma segura.')
-    return redirect('inicio')
+    respuesta = redirect('inicio')
+    respuesta['Clear-Site-Data'] = '"cache"'  # DEF-03: borra las copias de paginas privadas
+    return respuesta

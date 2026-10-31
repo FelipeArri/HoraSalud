@@ -15,7 +15,7 @@
       <div class="display-5 fw-bold my-2" style="letter-spacing:.12em">{{ codigo }}</div>
       <p class="texto-suave mb-3">Vence en {{ vigencia_min }} minutos y sirve una sola vez. Se muestra solo ahora: díctaselo al paciente o anótalo en un papel.</p>
       <div class="aviso-demo text-start">
-        El paciente entra a <strong>{{ request.scheme }}://{{ request.get_host }}{% url 'enrolar' %}</strong>
+        El paciente entra a <strong>{{ url_activar }}</strong>
         en su teléfono, escribe su RUT y este código, y registra su huella.
       </div>
       <a href="{% url 'some_enrolar' %}" class="btn btn-borde btn-lg w-100 mt-3">Activar a otro paciente</a>
