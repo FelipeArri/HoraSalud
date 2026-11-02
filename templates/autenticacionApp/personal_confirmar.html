@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+<div class="angosto">
+  <a class="volver" href="{% url 'personal_funcionarios' %}">{% include 'componentes/icono.html' with n='atras' %}Funcionarios</a>
+  <div class="tarjeta p-4">
+    <div class="etiqueta-seccion">Administrador CESFAM</div>
+    <h1 class="h2 mb-2">{{ titulo }}</h1>
+    <p class="mb-3"><strong>{{ funcionario.get_full_name }}</strong> · {{ funcionario.rut }}<br>
+      <span class="texto-suave">{{ funcionario.get_tipo_usuario_display }}</span></p>
+
+    {% if accion == 'desactivar' %}
+      <p class="texto-suave">No podrá volver a ingresar. Su historial se conserva y la cuenta se puede reactivar.</p>
+      {% if horas_futuras %}
+        <div class="alert alert-warning">Tiene <strong>{{ horas_futuras }}</strong> hora(s) futura(s) con pacientes. Coordina con el SOME su reasignación.</div>
+      {% endif %}
+    {% elif accion == 'clave' %}
+      <p class="texto-suave">Se reemplaza su clave por una temporal (también desbloquea la cuenta). Deberá cambiarla al ingresar.</p>
+    {% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% if accion != 'clave' %}
+        <label for="{{ form.motivo.id_for_label }}" class="form-label fw-semibold">{{ form.motivo.label }}</label>
+        {{ form.motivo }}
+      {% endif %}
+      <label for="{{ form.clave_admin.id_for_label }}" class="form-label fw-semibold mt-3">{{ form.clave_admin.label }}</label>
+      {{ form.clave_admin }}
+      {% for error in form.clave_admin.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+      <div class="form-text">Si te equivocas {{ intentos }} {% if intentos == 1 %}vez más{% else %}veces{% endif %}, se cierra tu sesión.</div>
+      <button type="submit" class="btn {% if accion == 'desactivar' %}btn-danger{% else %}btn-verde{% endif %} btn-lg w-100 mt-3">{{ titulo }}</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

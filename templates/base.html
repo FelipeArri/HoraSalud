@@ -12,7 +12,7 @@
   {% with ruta=request.resolver_match.url_name %}
   <header class="barra">
     <div class="container">
-      <a class="marca" href="{% if user.is_authenticated and paciente_activo %}{% url 'mi_inicio' %}{% elif es_some %}{% url 'some_nomina' %}{% else %}{% url 'inicio' %}{% endif %}">
+      <a class="marca" href="{% if user.is_authenticated and paciente_activo %}{% url 'mi_inicio' %}{% elif es_admin_cesfam %}{% url 'personal_funcionarios' %}{% elif es_profesional %}{% url 'profesional_agenda' %}{% elif es_some %}{% url 'some_nomina' %}{% else %}{% url 'inicio' %}{% endif %}">
         <span class="marca-logo">{% include 'componentes/icono.html' with n='corazon' %}</span>
         <span class="marca-texto"><strong>HoraSalud</strong><small>CESFAM Padre Esteban Gumucio</small></span>
       </a>
@@ -26,8 +26,19 @@
           {% if es_some %}
             <a href="{% url 'some_nomina' %}" class="d-none d-md-inline-flex {% if ruta == 'some_nomina' %}activo{% endif %}">Nómina</a>
             <a href="{% url 'some_enrolar' %}" class="d-none d-md-inline-flex {% if ruta == 'some_enrolar' %}activo{% endif %}">Activar huella</a>
+            <a href="{% url 'agendas_semana' %}" class="d-none d-md-inline-flex {% if ruta|slice:':7' == 'agendas' %}activo{% endif %}">Agendas</a>
             <a href="{% url 'some_solicitudes' %}" class="d-none d-md-inline-flex {% if ruta == 'some_solicitudes' %}activo{% endif %}">Solicitudes</a>
             <a href="{% url 'sala_espera' %}" class="d-none d-md-inline-flex" target="_blank" rel="noopener">Pantalla sala</a>
+          {% endif %}
+          {% if es_admin_cesfam %}
+            <a href="{% url 'personal_funcionarios' %}" class="d-none d-md-inline-flex {% if ruta|slice:':20' == 'personal_funcionario' %}activo{% endif %}">Funcionarios</a>
+            <a href="{% url 'agendas_semana' %}" class="d-none d-md-inline-flex {% if ruta|slice:':7' == 'agendas' %}activo{% endif %}">Agendas</a>
+            <a href="{% url 'agendas_ausencias' %}" class="d-none d-md-inline-flex {% if ruta == 'agendas_ausencias' %}activo{% endif %}">Ausencias</a>
+            <a href="{% url 'personal_auditoria' %}" class="d-none d-md-inline-flex {% if ruta == 'personal_auditoria' %}activo{% endif %}">Actividad</a>
+          {% endif %}
+          {% if es_profesional %}
+            <a href="{% url 'profesional_agenda' %}" class="d-none d-md-inline-flex {% if ruta == 'profesional_agenda' %}activo{% endif %}">Hoy</a>
+            <a href="{% url 'agendas_semana' %}" class="d-none d-md-inline-flex {% if ruta == 'agendas_semana' %}activo{% endif %}">Mi semana</a>
           {% endif %}
           {% if user.tipo_usuario == 'paciente' or user.tipo_usuario == 'tutor' %}
           <a href="{% url 'mis_datos' %}" class="chip-usuario ms-1" title="Mis datos y privacidad">
@@ -77,7 +88,15 @@
       <a href="{% url 'mis_horas' %}" class="{% if ruta == 'mis_horas' or ruta == 'cancelar_hora' %}activo{% endif %}">{% include 'componentes/icono.html' with n='lista' %}Mis horas</a>
     {% elif es_some %}
       <a href="{% url 'some_nomina' %}" class="{% if ruta == 'some_nomina' %}activo{% endif %}">{% include 'componentes/icono.html' with n='portapapeles' %}Nómina</a>
+      <a href="{% url 'some_ventanilla' %}" class="{% if ruta == 'some_ventanilla' %}activo{% endif %}">{% include 'componentes/icono.html' with n='calendario' %}Ventanilla</a>
       <a href="{% url 'some_enrolar' %}" class="{% if ruta == 'some_enrolar' %}activo{% endif %}">{% include 'componentes/icono.html' with n='huella' %}Activar huella</a>
+    {% elif es_admin_cesfam %}
+      <a href="{% url 'personal_funcionarios' %}" class="{% if ruta|slice:':20' == 'personal_funcionario' %}activo{% endif %}">{% include 'componentes/icono.html' with n='grupo' %}Funcionarios</a>
+      <a href="{% url 'agendas_semana' %}" class="{% if ruta|slice:':7' == 'agendas' %}activo{% endif %}">{% include 'componentes/icono.html' with n='calendario' %}Agendas</a>
+      <a href="{% url 'personal_auditoria' %}" class="{% if ruta == 'personal_auditoria' %}activo{% endif %}">{% include 'componentes/icono.html' with n='lista' %}Actividad</a>
+    {% elif es_profesional %}
+      <a href="{% url 'profesional_agenda' %}" class="{% if ruta == 'profesional_agenda' %}activo{% endif %}">{% include 'componentes/icono.html' with n='reloj' %}Hoy</a>
+      <a href="{% url 'agendas_semana' %}" class="{% if ruta == 'agendas_semana' %}activo{% endif %}">{% include 'componentes/icono.html' with n='calendario' %}Semana</a>
     {% endif %}
     {% if es_tutor %}
       <a href="{% url 'elegir_paciente' %}" class="{% if ruta == 'elegir_paciente' %}activo{% endif %}">{% include 'componentes/icono.html' with n='grupo' %}A cargo</a>

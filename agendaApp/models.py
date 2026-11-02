@@ -45,10 +45,18 @@ class BloqueHorario(models.Model):
         RESERVADO = 'reservado', 'Reservado'
         BLOQUEADO = 'bloqueado', 'Bloqueado'
 
+    class TipoCupo(models.TextChoices):
+        # B-21 (P-07): solo los "programados" se ven en la app del paciente
+        PROGRAMADO = 'programado', 'Programado (app)'
+        MORBILIDAD = 'morbilidad', 'Morbilidad del día (ventanilla)'
+        SOBRECUPO = 'sobrecupo', 'Sobrecupo (ventanilla)'
+
     agenda = models.ForeignKey(Agenda, on_delete=models.CASCADE, related_name='bloques')
     hora_inicio = models.TimeField()
     hora_fin = models.TimeField()
     estado = models.CharField(max_length=12, choices=Estado.choices, default=Estado.DISPONIBLE)
+    tipo_cupo = models.CharField('tipo de cupo', max_length=12, choices=TipoCupo.choices,
+                                 default=TipoCupo.PROGRAMADO)
 
     class Meta:
         verbose_name = 'bloque horario'
@@ -70,6 +78,7 @@ class Hora(models.Model):
         CANCELADA = 'cancelada', 'Cancelada'
         NO_SHOW = 'no_show', 'No-Show'
         REASIGNADA = 'reasignada', 'Reasignada'
+        SUSPENDIDA = 'suspendida', 'Suspendida por el CESFAM'  # B-21: profesional ausente
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     bloque = models.ForeignKey(BloqueHorario, on_delete=models.PROTECT, related_name='horas')
@@ -79,6 +88,7 @@ class Hora(models.Model):
                                          editable=False, related_name='hora_vigente')
     paciente = models.ForeignKey(Paciente, on_delete=models.PROTECT, related_name='horas')
     estado = models.CharField(max_length=12, choices=Estado.choices, default=Estado.RESERVADA)
+    ESTADOS_SIN_BLOQUE = (Estado.CANCELADA, Estado.SUSPENDIDA)  # dejan de ocupar el bloque
     motivo_cancelacion = CampoCifrado(blank=True, largo_maximo=200)  # cifrado en reposo (B-07)
     creado_en = models.DateTimeField(auto_now_add=True)
 
@@ -91,7 +101,7 @@ class Hora(models.Model):
         if not self._state.adding:
             bloque_anterior_id = Hora.objects.filter(pk=self.pk).values_list('bloque_id', flat=True).first()
 
-        self.bloque_activo = None if self.estado == self.Estado.CANCELADA else self.bloque
+        self.bloque_activo = None if self.estado in self.ESTADOS_SIN_BLOQUE else self.bloque
         with transaction.atomic():
             super().save(*args, **kwargs)
             sincronizar_estado_bloques({self.bloque_id, bloque_anterior_id})
@@ -123,3 +133,83 @@ def sincronizar_estado_bloques(bloque_ids):
 def liberar_bloque_al_borrar_hora(sender, instance, **kwargs):
     # Si se borra una hora (por ejemplo desde /admin/), su bloque vuelve a quedar libre.
     sincronizar_estado_bloques({instance.bloque_id})
+
+
+# ---------- B-21 · Gestión de agendas (la carga la Dirección: P-06/P-07) ----------
+
+class PlantillaAgenda(models.Model):
+    """Horario semanal de un profesional. Ej.: Dra. Rojas, lunes 08:00-12:00, bloques de 20 min."""
+
+    class Dia(models.IntegerChoices):
+        LUNES = 0, 'Lunes'
+        MARTES = 1, 'Martes'
+        MIERCOLES = 2, 'Miércoles'
+        JUEVES = 3, 'Jueves'
+        VIERNES = 4, 'Viernes'
+        SABADO = 5, 'Sábado'
+
+    profesional = models.ForeignKey(Profesional, on_delete=models.CASCADE, related_name='plantillas')
+    especialidad = models.ForeignKey(Especialidad, on_delete=models.PROTECT)
+    dia_semana = models.PositiveSmallIntegerField('día', choices=Dia.choices)
+    hora_inicio = models.TimeField()
+    hora_fin = models.TimeField()
+    duracion_min = models.PositiveSmallIntegerField('minutos por bloque', default=20)
+    tipo_cupo = models.CharField('tipo de cupo', max_length=12, choices=BloqueHorario.TipoCupo.choices[:2],
+                                 default=BloqueHorario.TipoCupo.PROGRAMADO)
+    activa = models.BooleanField(default=True)
+    creada_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'plantilla de agenda'
+        verbose_name_plural = 'Plantillas de agenda'
+        ordering = ['profesional', 'dia_semana', 'hora_inicio']
+
+    def __str__(self):
+        return (f'{self.profesional} · {self.get_dia_semana_display()} '
+                f'{self.hora_inicio:%H:%M}-{self.hora_fin:%H:%M} ({self.duracion_min} min)')
+
+
+class AusenciaProfesional(models.Model):
+    """Días en que el profesional no atiende: sus bloques se bloquean y sus horas se suspenden."""
+
+    class Motivo(models.TextChoices):
+        LICENCIA = 'licencia', 'Licencia médica'
+        VACACIONES = 'vacaciones', 'Vacaciones / feriado legal'
+        CAPACITACION = 'capacitacion', 'Capacitación'
+        IMPREVISTA = 'imprevista', 'Ausencia imprevista del día'
+        OTRO = 'otro', 'Otro'
+
+    profesional = models.ForeignKey(Profesional, on_delete=models.CASCADE, related_name='ausencias')
+    desde = models.DateField()
+    hasta = models.DateField()
+    motivo = models.CharField(max_length=15, choices=Motivo.choices)
+    detalle = models.CharField(max_length=150, blank=True)
+    registrada_por = models.ForeignKey('autenticacionApp.Usuario', on_delete=models.SET_NULL, null=True,
+                                       related_name='+')
+    registrada_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'ausencia de profesional'
+        verbose_name_plural = 'Ausencias de profesionales'
+        ordering = ['-desde']
+
+    def __str__(self):
+        return f'{self.profesional} · {self.desde:%d-%m-%Y} a {self.hasta:%d-%m-%Y} · {self.get_motivo_display()}'
+
+
+class IndicacionControl(models.Model):
+    """P-10: el profesional indica "vuelva en ~1 mes" y el paciente pide la hora después por la app."""
+    paciente = models.ForeignKey(Paciente, on_delete=models.CASCADE, related_name='indicaciones_control')
+    especialidad = models.ForeignKey(Especialidad, on_delete=models.PROTECT)
+    fecha_sugerida = models.DateField()
+    indicada_por = models.ForeignKey(Profesional, on_delete=models.SET_NULL, null=True, related_name='+')
+    creada_en = models.DateTimeField(auto_now_add=True)
+    resuelta_en = models.DateTimeField(null=True, blank=True)  # cuando el paciente reserva
+
+    class Meta:
+        verbose_name = 'indicación de control'
+        verbose_name_plural = 'Indicaciones de control'
+        ordering = ['fecha_sugerida']
+
+    def __str__(self):
+        return f'{self.paciente} · {self.especialidad} · desde {self.fecha_sugerida:%d-%m-%Y}'

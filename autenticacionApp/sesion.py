@@ -55,16 +55,35 @@ def requiere_paciente(vista):
     return envoltura
 
 
-def requiere_some(vista):
-    @wraps(vista)
-    def envoltura(request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            return redirect('ingresar')
-        if not es_some(request.user):
-            messages.warning(request, 'Esta sección es solo para el personal del SOME.')
-            return redirect('inicio')
-        return vista(request, *args, **kwargs)
-    return envoltura
+def es_admin_cesfam(usuario):
+    return usuario.is_authenticated and usuario.tipo_usuario == Usuario.Tipo.ADMINISTRADOR
+
+
+def es_profesional(usuario):
+    return usuario.is_authenticated and usuario.tipo_usuario == Usuario.Tipo.PROFESIONAL
+
+
+def _exigir(condicion, aviso, ingreso='ingresar'):
+    """Decorador: sesión iniciada + condición + (B-20) clave temporal ya cambiada."""
+    def decorador(vista):
+        @wraps(vista)
+        def envoltura(request, *args, **kwargs):
+            if not request.user.is_authenticated:
+                return redirect(ingreso)
+            if not condicion(request.user):
+                messages.warning(request, aviso)
+                return redirect('inicio')
+            if request.user.debe_cambiar_clave:
+                return redirect('personal_cambiar_clave')
+            return vista(request, *args, **kwargs)
+        return envoltura
+    return decorador
+
+
+requiere_some = _exigir(es_some, 'Esta sección es solo para el personal del SOME.')
+requiere_administrador = _exigir(es_admin_cesfam, 'Esta sección es solo para el Administrador CESFAM.',
+                                 'personal_ingresar')
+requiere_profesional = _exigir(es_profesional, 'Esta sección es solo para profesionales.', 'personal_ingresar')
 
 
 def contexto_sesion(request):
@@ -76,4 +95,6 @@ def contexto_sesion(request):
         'paciente_activo': paciente_activo(request),
         'es_tutor': usuario.tipo_usuario == Usuario.Tipo.TUTOR,
         'es_some': es_some(usuario),
+        'es_admin_cesfam': es_admin_cesfam(usuario),
+        'es_profesional': es_profesional(usuario),
     }

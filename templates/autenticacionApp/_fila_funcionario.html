@@ -1,0 +1,25 @@
+<tr{% if not f.is_active %} class="texto-suave"{% endif %}>
+  <td><strong>{{ f.get_full_name }}</strong>{% if f.pk == user.pk %} <span class="estado estado-reservada">Tú</span>{% endif %}</td>
+  <td class="text-nowrap">{{ f.rut }}</td>
+  <td>{{ f.get_tipo_usuario_display }}{% if f.profesional.especialidad %}<div class="small texto-suave">{{ f.profesional.especialidad }}{% if f.profesional.box_atencion %} · Box {{ f.profesional.box_atencion }}{% endif %}</div>{% endif %}</td>
+  <td class="text-nowrap small">{{ f.date_joined|date:"d-m-Y" }}</td>
+  <td class="text-nowrap small">{{ f.last_login|date:"d-m-Y H:i"|default:"Nunca" }}</td>
+  <td>
+    {% if not f.is_active %}<span class="estado estado-cancelada">Desactivada</span>
+    {% elif f.bloqueado_hasta and f.bloqueado_hasta > ahora %}<span class="estado estado-reasignada">Bloqueada</span>
+    {% elif f.debe_cambiar_clave %}<span class="estado estado-reservada">Clave temporal</span>
+    {% else %}<span class="estado estado-confirmada">Activa</span>{% endif %}
+  </td>
+  <td class="text-nowrap">
+    {% if f.pk != user.pk %}
+      {% if f.is_active %}
+        <a class="btn btn-borde btn-sm" href="{% url 'personal_funcionario_accion' f.pk 'clave' %}">Clave temporal</a>
+        <a class="btn btn-borde btn-sm" href="{% url 'personal_funcionario_accion' f.pk 'desactivar' %}">Desactivar</a>
+      {% else %}
+        <a class="btn btn-borde btn-sm" href="{% url 'personal_funcionario_accion' f.pk 'reactivar' %}">Reactivar</a>
+      {% endif %}
+    {% else %}
+      <a class="btn btn-borde btn-sm" href="{% url 'personal_cambiar_clave' %}">Cambiar mi clave</a>
+    {% endif %}
+  </td>
+</tr>
