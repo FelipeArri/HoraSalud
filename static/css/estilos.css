@@ -300,3 +300,10 @@ span.capital, strong.capital { display: inline-block; }
 .caja-politica { max-height: 55vh; overflow-y: auto; }
 a.chip-usuario:hover { background: var(--verde-borde); color: var(--verde-oscuro); }
 .pie a { color: var(--texto-suave); }
+
+/* ---------- B-18: resultado de la consulta al sistema clínico y FONASA ---------- */
+.fila-chequeo { display: flex; align-items: flex-start; gap: .6rem; padding: .55rem .75rem; border-radius: 10px; margin-bottom: .4rem; font-size: .98rem; }
+.fila-chequeo .icono { margin-top: .1rem; }
+.fila-chequeo.ok { background: var(--verde-suave); color: var(--verde-oscuro); }
+.fila-chequeo.mal { background: var(--rojo-suave); color: var(--rojo); }
+.fila-chequeo.aviso { background: var(--ambar-suave); color: var(--ambar); }
