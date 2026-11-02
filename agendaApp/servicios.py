@@ -55,6 +55,10 @@ def horas_vigentes(paciente):
 
 def reservar_hora(paciente, bloque_id):
     """RF-02. Devuelve la Hora creada o lanza ReglaNegocioError."""
+    from . import prevision  # B-19: se importa aqui para evitar una importacion circular
+    prevision.revalidar(paciente)  # consulta FONASA si la ultima consulta tiene mas de 30 dias
+    if paciente.estado_inscripcion != paciente.Estado.VIGENTE:
+        raise ReglaNegocioError(prevision.mensaje_no_vigente(paciente))  # RN-16
     with transaction.atomic():
         # select_for_update: si dos personas confirman a la vez, la segunda espera y luego ve el bloque tomado
         bloque = (BloqueHorario.objects.select_for_update()

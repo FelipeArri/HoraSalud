@@ -14,6 +14,8 @@ SIN_PREVISION, NO_INSCRITO, PASIVO = '31000005-1', '31000006-K', '31000007-8'
 
 
 class ConsultaTests(TestCase):
+    databases = {'default', 'fonasa'}  # tambien consulta el padron FONASA simulado
+
     def setUp(self):
         call_command('cargar_datos_demo', stdout=StringIO())
 
@@ -38,6 +40,8 @@ class ConsultaTests(TestCase):
 
 
 class PantallaSomeTests(TestCase):
+    databases = {'default', 'fonasa'}  # tambien consulta el padron FONASA simulado
+
     def setUp(self):
         call_command('cargar_datos_demo', stdout=StringIO())
         self.some = Usuario.objects.get(tipo_usuario=Usuario.Tipo.ADMINISTRATIVO)

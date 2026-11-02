@@ -7,8 +7,8 @@ HoraSalud NO inscribe pacientes: consulta dos fuentes oficiales.
 
 El resto del sistema conoce solo las interfaces SistemaClinicoService y
 PrevisionService, con respuestas en un formato propio y estable. Cada adapter
-traduce el formato de su sistema externo. Hoy los clientes externos son
-simulados (sistemas_externos_simulados.py) con datos ficticios; con un
+traduce el formato de su sistema externo. Hoy los clientes consultan la base
+fonasa_simulado (fonasaSimuladoApp), con datos ficticios; con un
 convenio real se cambia solo el cliente, no el resto del codigo.
 """
 
@@ -67,6 +67,6 @@ class AdapterFonasa(PrevisionService):
 
 
 def servicios_externos():
-    """Fabrica de los servicios usados por HoraSalud. Hoy: clientes simulados."""
-    from .sistemas_externos_simulados import ClienteFonasaSimulado, ClienteSistemaClinicoSimulado
-    return AdapterSistemaClinico(ClienteSistemaClinicoSimulado()), AdapterFonasa(ClienteFonasaSimulado())
+    """Fabrica de los servicios usados por HoraSalud. Hoy consultan la base fonasa_simulado."""
+    from fonasaSimuladoApp.clientes import ClienteFonasaBD, ClienteInscripcionBD
+    return AdapterSistemaClinico(ClienteInscripcionBD()), AdapterFonasa(ClienteFonasaBD())
