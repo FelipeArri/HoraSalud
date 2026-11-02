@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}Ingreso de personal{% endblock %}
+
+{% block content %}
+<div class="angosto">
+  <a class="volver" href="{% url 'inicio' %}">{% include 'componentes/icono.html' with n='atras' %}Volver</a>
+
+  <div class="tarjeta p-4">
+    <div class="text-center mb-3">
+      <span class="icono-caja ambar mx-auto mb-3">{% include 'componentes/icono.html' with n='portapapeles' %}</span>
+      <h1 class="h2 mb-1">Ingreso de personal</h1>
+      <p class="texto-suave mb-0">SOME, profesionales y Administrador CESFAM. Entra con tu RUT y tu clave.</p>
+    </div>
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% for error in form.non_field_errors %}<div class="alert alert-danger py-2">{{ error }}</div>{% endfor %}
+      <label for="{{ form.rut.id_for_label }}" class="form-label fw-semibold">RUT</label>
+      <input type="text" name="rut" id="{{ form.rut.id_for_label }}" value="{{ form.rut.value|default:'' }}"
+             class="form-control form-control-lg campo-rut {% if form.rut.errors %}is-invalid{% endif %}"
+             placeholder="12.345.678-9" maxlength="12" autocomplete="username" autofocus>
+      {% for error in form.rut.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+
+      <label for="{{ form.clave.id_for_label }}" class="form-label fw-semibold mt-3">Clave</label>
+      {{ form.clave }}
+      {% for error in form.clave.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+
+      <button type="submit" class="btn btn-verde btn-lg w-100 mt-3">Ingresar</button>
+    </form>
+  </div>
+
+  <div class="tarjeta mt-3 d-flex gap-3 align-items-center">
+    <span class="icono-caja azul">{% include 'componentes/icono.html' with n='escudo' %}</span>
+    <div class="texto-suave">
+      ¿Olvidaste tu clave o se bloqueó tu cuenta? Pide al <strong>Administrador CESFAM</strong> una clave temporal.
+      Cada ingreso queda registrado.
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function () {
+    var campo = document.getElementById('{{ form.rut.id_for_label }}');
+    if (!campo) return;
+    campo.addEventListener('input', function () {
+      var limpio = campo.value.replace(/[^0-9kK]/g, '').toUpperCase().slice(0, 9);
+      if (limpio.length < 2) { campo.value = limpio; return; }
+      campo.value = limpio.slice(0, -1).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + '-' + limpio.slice(-1);
+    });
+  })();
+</script>
+{% endblock %}

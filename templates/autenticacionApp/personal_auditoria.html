@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}Registro de actividad{% endblock %}
+{% block ancho_alertas %}{% endblock %}
+
+{% block content %}
+<a class="volver" href="{% url 'personal_funcionarios' %}">{% include 'componentes/icono.html' with n='atras' %}Funcionarios</a>
+<div class="etiqueta-seccion">Administrador CESFAM</div>
+<h1 class="mb-1">Registro de actividad del personal</h1>
+<p class="texto-suave">Últimos 100 movimientos (RN-11). No se puede editar ni borrar.</p>
+
+<div class="tarjeta p-2 p-md-3">
+  <div class="table-responsive">
+  <table class="tabla-nomina">
+    <thead><tr><th>Fecha</th><th>Quién</th><th>Acción</th><th>Sobre quién</th><th>Detalle</th></tr></thead>
+    <tbody>
+      {% for r in registros %}
+      <tr>
+        <td class="text-nowrap small">{{ r.fecha|date:"d-m-Y H:i:s" }}</td>
+        <td>{{ r.actor.get_full_name|default:"—" }}<div class="small texto-suave">{{ r.actor_rut }}</div></td>
+        <td>{{ r.get_accion_display }}</td>
+        <td>{% if r.objetivo and r.objetivo != r.actor %}{{ r.objetivo.get_full_name }}<div class="small texto-suave">{{ r.objetivo_rut }}</div>{% else %}—{% endif %}</td>
+        <td class="small">{{ r.detalle|default:"" }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" class="text-center texto-suave">Aún no hay movimientos.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}

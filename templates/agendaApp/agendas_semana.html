@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}Agendas{% endblock %}
+{% block ancho_alertas %}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-end flex-wrap gap-2 mb-3">
+  <div>
+    <div class="etiqueta-seccion">{% if es_admin_cesfam %}Dirección CESFAM{% elif es_profesional %}Profesional{% else %}Panel SOME{% endif %}</div>
+    <h1 class="mb-0">Agenda semanal</h1>
+    {% if profesional %}<div class="texto-suave">{{ profesional.usuario.get_full_name }} · {{ profesional.especialidad|default:"" }}{% if profesional.box_atencion %} · Box {{ profesional.box_atencion }}{% endif %}</div>{% endif %}
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    {% if es_admin_cesfam and profesional %}
+      <a href="{% url 'agendas_plantillas' profesional.pk %}" class="btn btn-verde">{% include 'componentes/icono.html' with n='calendario' %} Horario semanal</a>
+      <a href="{% url 'agendas_ausencias' %}?profesional={{ profesional.pk }}" class="btn btn-borde">Registrar ausencia</a>
+    {% elif es_some %}
+      <a href="{% url 'some_ventanilla' %}{% if profesional %}?profesional={{ profesional.pk }}{% endif %}" class="btn btn-verde">{% include 'componentes/icono.html' with n='portapapeles' %} Ventanilla / sobrecupo</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="tarjeta d-flex flex-wrap gap-2 align-items-center justify-content-between">
+  {% if not es_profesional %}
+  <form method="get" class="d-flex gap-2 align-items-center flex-wrap">
+    <input type="hidden" name="semana" value="{{ lunes|date:'Y-m-d' }}">
+    <select name="profesional" class="form-select" onchange="this.form.submit()" aria-label="Profesional">
+      {% for p in profesionales %}<option value="{{ p.pk }}" {% if p.pk == profesional.pk %}selected{% endif %}>{{ p.usuario.get_full_name }} · {{ p.especialidad|default:"" }}</option>{% endfor %}
+    </select>
+  </form>
+  {% endif %}
+  <div class="d-flex gap-2 align-items-center">
+    <a class="btn btn-borde btn-sm" href="?profesional={{ profesional.pk }}&semana={{ anterior|date:'Y-m-d' }}">‹ Anterior</a>
+    <strong class="text-nowrap">Semana del {{ lunes|date:"j \d\e F" }}</strong>
+    <a class="btn btn-borde btn-sm" href="?profesional={{ profesional.pk }}&semana={{ siguiente|date:'Y-m-d' }}">Siguiente ›</a>
+  </div>
+</div>
+
+<div class="leyenda-cal my-3">
+  <span class="bloque-cal">Libre</span>
+  <span class="bloque-cal reservado">Con paciente</span>
+  <span class="bloque-cal bloqueado">Bloqueado</span>
+  <span class="bloque-cal morbilidad">Morbilidad (ventanilla)</span>
+  <span class="bloque-cal sobrecupo">Sobrecupo</span>
+</div>
+
+{% if not profesional %}
+  <div class="tarjeta text-center texto-suave">No hay profesionales activos.</div>
+{% else %}
+<div class="semana">
+  {% for col in columnas %}
+  <div class="semana-dia {% if col.fecha == hoy %}hoy{% endif %}">
+    <h3>{{ col.fecha|date:"l j" }}</h3>
+    {% if col.ausencia %}<div class="estado estado-cancelada mb-2 d-inline-block">{{ col.ausencia.get_motivo_display }}</div>{% endif %}
+    {% for b in col.bloques %}
+      <span class="bloque-cal {{ b.estado }} {{ b.tipo_cupo }}" title="{{ b.get_tipo_cupo_display }} · {{ b.get_estado_display }}">
+        <strong>{{ b.hora_inicio|time:"H:i" }}</strong>
+        {% if b.hora_vigente %} {{ b.hora_vigente.paciente.usuario.first_name }} {{ b.hora_vigente.paciente.usuario.last_name|slice:":1" }}.{% elif b.estado == 'bloqueado' %} —{% endif %}
+      </span>
+    {% empty %}
+      {% if not col.ausencia %}<div class="small texto-suave">Sin agenda</div>{% endif %}
+    {% endfor %}
+  </div>
+  {% endfor %}
+</div>
+
+{% if es_admin_cesfam %}
+<div class="row g-3 mt-2">
+  <div class="col-12 col-md-6">
+    <form method="post" action="{% url 'agendas_generar' %}" class="tarjeta h-100">
+      {% csrf_token %}
+      <strong>Generar agendas desde el horario semanal</strong>
+      <p class="small texto-suave mb-2">Crea los bloques que falten desde hoy. No toca lo que ya existe (RN-03: ~1 mes publicado).</p>
+      <input type="hidden" name="profesional" value="{{ profesional.pk }}">
+      <div class="d-flex gap-2">
+        <select name="semanas" class="form-select" aria-label="Semanas">{% for n in "1234" %}<option value="{{ n }}" {% if n == "4" %}selected{% endif %}>{{ n }} semana{{ n|pluralize }}</option>{% endfor %}</select>
+        <button class="btn btn-verde text-nowrap">Generar</button>
+      </div>
+    </form>
+  </div>
+  <div class="col-12 col-md-6">
+    <form method="post" action="{% url 'agendas_duplicar' %}" class="tarjeta h-100">
+      {% csrf_token %}
+      <strong>Duplicar la semana anterior</strong>
+      <p class="small texto-suave mb-2">Copia los bloques de la semana del {{ anterior|date:"j \d\e F" }} a esta semana (sin pacientes ni sobrecupos).</p>
+      <input type="hidden" name="profesional" value="{{ profesional.pk }}">
+      <input type="hidden" name="semana" value="{{ lunes|date:'Y-m-d' }}">
+      <button class="btn btn-borde">Duplicar en esta semana</button>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}

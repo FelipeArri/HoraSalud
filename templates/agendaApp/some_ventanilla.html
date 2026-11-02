@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}Ventanilla{% endblock %}
+{% block ancho_alertas %}medio{% endblock %}
+
+{% block content %}
+<div class="medio">
+  <a class="volver" href="{% url 'some_nomina' %}">{% include 'componentes/icono.html' with n='atras' %}Nómina</a>
+  <div class="etiqueta-seccion">Panel SOME</div>
+  <h1 class="mb-1">Ventanilla: morbilidad y sobrecupos</h1>
+  <p class="texto-suave">Para el paciente que está <strong>presente</strong> en el SOME. Estas horas no aparecen en la app y quedan registradas en la auditoría.</p>
+
+  <form method="get" class="tarjeta p-3 mb-3" novalidate>
+    <div class="row g-2 align-items-end">
+      <div class="col-12 col-md-4">
+        <label class="form-label fw-semibold" for="id_rut">RUT del paciente</label>
+        <input type="text" name="rut" id="id_rut" value="{{ rut_form.rut.value|default:'' }}" class="form-control campo-rut {% if rut_form.rut.errors %}is-invalid{% endif %}" placeholder="12.345.678-9" maxlength="12">
+      </div>
+      <div class="col-6 col-md-3">
+        <label class="form-label fw-semibold" for="id_fecha">Día</label>
+        <input type="date" name="fecha" id="id_fecha" value="{{ fecha|date:'Y-m-d' }}" class="form-control">
+      </div>
+      <div class="col-6 col-md-3">
+        <label class="form-label fw-semibold" for="id_prof">Profesional</label>
+        <select name="profesional" id="id_prof" class="form-select">
+          <option value="">Todos</option>
+          {% for p in profesionales %}<option value="{{ p.pk }}" {% if p.pk == profesional.pk %}selected{% endif %}>{{ p.usuario.get_full_name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-12 col-md-2"><button class="btn btn-verde w-100">Buscar</button></div>
+    </div>
+    {% for error in rut_form.rut.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+  </form>
+
+  {% if paciente %}
+    <div class="tarjeta d-flex gap-3 align-items-center">
+      <span class="avatar">{{ paciente.usuario.first_name|first }}</span>
+      <div><strong>{{ paciente.usuario.get_full_name }}</strong> · {{ paciente.usuario.rut }}
+        <div class="small texto-suave">{{ paciente.sector|default:"" }} · {{ paciente.get_prevision_display }}{% if paciente.tramo %} {{ paciente.tramo }}{% endif %} · {{ paciente.get_estado_inscripcion_display }}</div></div>
+    </div>
+
+    {% for agenda, datos in libres.items %}
+      <div class="tarjeta">
+        <div class="d-flex justify-content-between flex-wrap gap-2 mb-2">
+          <strong>{{ agenda.profesional.usuario.get_full_name }} · {{ agenda.especialidad }}</strong>
+          {% if datos.ausente %}<span class="estado estado-cancelada">Ausente</span>{% endif %}
+        </div>
+        {% if not datos.ausente %}
+          {% if datos.bloques %}
+            <form method="post" class="d-flex flex-wrap gap-2 mb-3">{% csrf_token %}
+              {% for b in datos.bloques %}
+                <button name="bloque" value="{{ b.pk }}" class="btn btn-borde btn-sm" title="{{ b.get_tipo_cupo_display }}">
+                  {{ b.hora_inicio|time:"H:i" }}{% if b.tipo_cupo == 'morbilidad' %} · morbilidad{% endif %}
+                </button>
+              {% endfor %}
+            </form>
+          {% else %}
+            <p class="small texto-suave">Sin bloques libres este día.</p>
+          {% endif %}
+          <form method="post" class="d-flex gap-2 align-items-center flex-wrap">{% csrf_token %}
+            <input type="hidden" name="agenda" value="{{ agenda.pk }}">
+            <label class="small fw-semibold" for="sc-{{ agenda.pk }}">Sobrecupo a las</label>
+            <input type="time" name="hora_inicio" id="sc-{{ agenda.pk }}" value="{{ datos.sugerida|time:'H:i' }}" class="form-control form-control-sm" style="max-width:8rem">
+            <button class="btn btn-sm btn-danger">Dar sobrecupo</button>
+          </form>
+        {% endif %}
+      </div>
+    {% empty %}
+      <div class="tarjeta text-center texto-suave">No hay agendas ese día.</div>
+    {% endfor %}
+  {% endif %}
+</div>
+{% endblock %}

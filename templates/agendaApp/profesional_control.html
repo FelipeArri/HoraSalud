@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}Próximo control{% endblock %}
+{% block ancho_alertas %}medio{% endblock %}
+
+{% block content %}
+<div class="medio">
+  <a class="volver" href="{% url 'profesional_agenda' %}">{% include 'componentes/icono.html' with n='atras' %}Mi agenda</a>
+  <div class="etiqueta-seccion">Profesional</div>
+  <h1 class="mb-1">Próximo control</h1>
+  <p class="texto-suave">{{ hora.paciente.usuario.get_full_name }} · {{ hora.bloque.agenda.especialidad }}</p>
+
+  <div class="tarjeta">
+    <strong>Opción 1 · Indicar el control</strong>
+    <p class="small texto-suave mb-2">El paciente verá en la app un recordatorio para pedir su hora.</p>
+    <form method="post" class="d-flex gap-2 align-items-center flex-wrap">{% csrf_token %}
+      <input type="hidden" name="accion" value="indicar">
+      <label for="semanas" class="small fw-semibold">Volver en</label>
+      <select name="semanas" id="semanas" class="form-select form-select-sm" style="max-width:9rem">
+        {% for n in "2468" %}<option value="{{ n }}" {% if n == "4" %}selected{% endif %}>{{ n }} semanas</option>{% endfor %}
+        <option value="12">3 meses</option><option value="26">6 meses</option>
+      </select>
+      <button class="btn btn-borde btn-sm">Indicar control</button>
+    </form>
+  </div>
+
+  <div class="etiqueta-seccion mt-4 mb-2">Opción 2 · Agendar ahora (sugerido desde el {{ sugerida|date:"j \d\e F" }})</div>
+  {% for dia, bloques in dias.items %}
+    <div class="tarjeta">
+      <strong class="capital">{{ dia|date:"l j \d\e F" }}</strong>
+      <form method="post" class="d-flex flex-wrap gap-2 mt-2">{% csrf_token %}
+        {% for b in bloques %}<button name="bloque" value="{{ b.pk }}" class="btn btn-borde btn-sm">{{ b.hora_inicio|time:"H:i" }}</button>{% endfor %}
+      </form>
+    </div>
+  {% empty %}
+    <div class="tarjeta text-center texto-suave">No tienes bloques libres en las próximas semanas. Usa "Indicar control" o pide a Dirección que genere tus agendas.</div>
+  {% endfor %}
+</div>
+{% endblock %}

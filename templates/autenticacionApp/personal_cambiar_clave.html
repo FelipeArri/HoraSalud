@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}Cambiar mi clave{% endblock %}
+
+{% block content %}
+<div class="angosto">
+  <div class="tarjeta p-4">
+    <h1 class="h2 mb-1">Cambiar mi clave</h1>
+    {% if obligatorio %}
+      <div class="alert alert-warning mt-2">Estás usando una <strong>clave temporal</strong>. Crea tu propia clave para continuar.</div>
+    {% endif %}
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% for campo in form %}
+        <label for="{{ campo.id_for_label }}" class="form-label fw-semibold mt-2">{{ campo.label }}</label>
+        {{ campo }}
+        {% for error in campo.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+      {% endfor %}
+      <div class="form-text">Mínimo 8 caracteres, que no sea solo números ni se parezca a tu nombre.</div>
+      <button type="submit" class="btn btn-verde btn-lg w-100 mt-3">Guardar clave</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}Ausencias{% endblock %}
+{% block ancho_alertas %}medio{% endblock %}
+
+{% block content %}
+<div class="medio">
+  <a class="volver" href="{% url 'agendas_semana' %}">{% include 'componentes/icono.html' with n='atras' %}Agenda semanal</a>
+  <div class="etiqueta-seccion">Dirección CESFAM</div>
+  <h1 class="mb-1">Ausencias de profesionales</h1>
+  <p class="texto-suave">Licencias, vacaciones, capacitaciones o ausencias del día. Los bloques de esos días se bloquean y las horas con pacientes quedan <strong>suspendidas por el CESFAM</strong>: el paciente ve el aviso en la app y queda primero en la lista de espera (RN-05, RN-13).</p>
+
+  <form method="post" novalidate class="tarjeta p-4 mb-3">
+    {% csrf_token %}
+    <div class="row g-3">
+      {% for campo in form %}
+      <div class="col-12 {% if campo.name == 'desde' or campo.name == 'hasta' %}col-md-6{% endif %}">
+        <label for="{{ campo.id_for_label }}" class="form-label fw-semibold">{{ campo.label|capfirst }}</label>
+        {{ campo }}
+        {% for error in campo.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+    <button class="btn btn-danger mt-3 w-100">Registrar ausencia</button>
+  </form>
+
+  <div class="etiqueta-seccion mb-2">Registradas recientemente</div>
+  <div class="tarjeta p-0">
+    {% for a in recientes %}
+      <div class="px-3 py-2 small {% if not forloop.last %}border-bottom{% endif %}">
+        <strong>{{ a.profesional.usuario.get_full_name }}</strong> · {{ a.desde|date:"d-m-Y" }}{% if a.hasta != a.desde %} a {{ a.hasta|date:"d-m-Y" }}{% endif %} · {{ a.get_motivo_display }}{% if a.detalle %} ({{ a.detalle }}){% endif %}
+        <span class="texto-suave">· registró {{ a.registrada_por.get_full_name|default:"—" }}</span>
+      </div>
+    {% empty %}
+      <div class="p-3 text-center texto-suave">No hay ausencias registradas.</div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

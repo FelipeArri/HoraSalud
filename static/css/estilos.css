@@ -150,7 +150,7 @@ a.tarjeta-accion:hover { transform: translateY(-2px); box-shadow: var(--sombra-a
 .estado-reservada { background: var(--azul-suave); color: var(--azul); }
 .estado-confirmada { background: var(--verde-suave); color: var(--verde-oscuro); }
 .estado-atendida { background: #eceff1; color: #37474f; }
-.estado-cancelada, .estado-no_show { background: var(--rojo-suave); color: var(--rojo); }
+.estado-cancelada, .estado-no_show, .estado-suspendida { background: var(--rojo-suave); color: var(--rojo); }
 .estado-reasignada { background: var(--ambar-suave); color: var(--ambar); }
 
 /* ---------- Pasos de la reserva ---------- */
@@ -307,3 +307,17 @@ a.chip-usuario:hover { background: var(--verde-borde); color: var(--verde-oscuro
 .fila-chequeo.ok { background: var(--verde-suave); color: var(--verde-oscuro); }
 .fila-chequeo.mal { background: var(--rojo-suave); color: var(--rojo); }
 .fila-chequeo.aviso { background: var(--ambar-suave); color: var(--ambar); }
+
+/* B-21 · Calendario semanal de agendas */
+.semana { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .75rem; }
+.semana-dia { background: #fff; border: 1px solid var(--borde); border-radius: 12px; padding: .6rem; min-width: 0; }
+.semana-dia h3 { font-size: .95rem; margin: 0 0 .5rem; text-transform: capitalize; }
+.semana-dia.hoy { border-color: var(--verde); box-shadow: 0 0 0 2px var(--verde-suave); }
+.bloque-cal { display: block; font-size: .8rem; border-radius: 8px; padding: .3rem .45rem; margin-bottom: .3rem;
+  background: var(--verde-suave); color: var(--verde-oscuro); line-height: 1.25; overflow: hidden; text-overflow: ellipsis; }
+.bloque-cal.reservado { background: var(--azul-suave); color: var(--azul); }
+.bloque-cal.bloqueado { background: #eceff1; color: #607d8b; text-decoration: line-through; }
+.bloque-cal.morbilidad { border-left: 4px solid var(--ambar); }
+.bloque-cal.sobrecupo { border-left: 4px solid var(--rojo); }
+.leyenda-cal { display: flex; flex-wrap: wrap; gap: .75rem; font-size: .8rem; }
+.leyenda-cal .bloque-cal { display: inline-block; margin: 0; }

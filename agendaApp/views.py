@@ -16,7 +16,7 @@ from django.views.decorators.http import require_POST
 from autenticacionApp.models import Paciente
 from autenticacionApp.sesion import requiere_paciente, requiere_some
 
-from . import prevision, servicios
+from . import gestion_agendas, prevision, servicios
 from .estados_hora import TransicionInvalida
 from .models import Agenda, BloqueHorario, Especialidad, Hora
 
@@ -42,6 +42,8 @@ def mi_inicio(request):
         'aviso_no_vigente': prevision.mensaje_no_vigente(request.paciente) if no_vigente else '',
         'proxima': vigentes.first(),
         'cantidad_vigentes': vigentes.count(),
+        'suspendidas': gestion_agendas.horas_suspendidas_sin_reagendar(request.paciente),  # B-21 · RN-13
+        'indicaciones': gestion_agendas.indicaciones_pendientes(request.paciente),  # P-10
     })
 
 
@@ -163,7 +165,7 @@ def some_nomina(request):
     except ValueError:
         dia = fechas[0] if fechas else timezone.localdate()
     horas = (Hora.objects.filter(bloque__agenda__fecha=dia)
-             .exclude(estado=Hora.Estado.CANCELADA)
+             .exclude(estado__in=Hora.ESTADOS_SIN_BLOQUE)
              .select_related('paciente__usuario', 'bloque__agenda__especialidad',
                              'bloque__agenda__profesional')
              .order_by('bloque__hora_inicio'))

@@ -17,7 +17,7 @@ from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from agendaApp.models import Agenda, BloqueHorario, Especialidad, Hora
+from agendaApp.models import Agenda, BloqueHorario, Especialidad, Hora, PlantillaAgenda
 from autenticacionApp.models import Consentimiento, Paciente, Profesional, Sector
 from autenticacionApp.privacidad import VERSION_POLITICA
 from autenticacionApp.validators import calcular_dv
@@ -106,6 +106,18 @@ class Command(BaseCommand):
             Consentimiento.objects.get_or_create(usuario=persona, version=VERSION_POLITICA,
                                                  defaults={'aceptado': True})
 
+        # B-21: horario semanal (lun-vie 08:00-12:00) + 1 hora de morbilidad del dia en Medicina General
+        for prof in profesionales:
+            for dia_semana in range(5):
+                PlantillaAgenda.objects.get_or_create(
+                    profesional=prof, especialidad=prof.especialidad, dia_semana=dia_semana,
+                    hora_inicio=time(8, 0), defaults={'hora_fin': time(12, 0), 'duracion_min': DURACION_BLOQUE_MIN})
+                if prof.especialidad.tipo == Especialidad.Tipo.MEDICINA_GENERAL:
+                    PlantillaAgenda.objects.get_or_create(
+                        profesional=prof, especialidad=prof.especialidad, dia_semana=dia_semana,
+                        hora_inicio=time(12, 0), defaults={'hora_fin': time(13, 0), 'duracion_min': DURACION_BLOQUE_MIN,
+                                                           'tipo_cupo': BloqueHorario.TipoCupo.MORBILIDAD})
+
         bloques = []
         for dia in proximos_dias_habiles(5):
             for prof in profesionales:
@@ -128,6 +140,9 @@ class Command(BaseCommand):
                                     motivo_cancelacion='Paciente avisa que no puede asistir'
                                     if estado == Hora.Estado.CANCELADA else '')
                 # El estado del bloque lo actualiza Hora.save() (DEF-01).
+
+        from agendaApp.gestion_agendas import generar_agendas
+        generar_agendas(desde=proximos_dias_habiles(1)[0], semanas=1)  # agrega los cupos de morbilidad
 
         for orden, paciente in enumerate(pacientes[-3:], start=1):
             EsperaPaciente.objects.get_or_create(especialidad=especialidades[0], paciente=paciente,

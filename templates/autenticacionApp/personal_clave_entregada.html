@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}Clave temporal{% endblock %}
+
+{% block content %}
+<div class="angosto">
+  <div class="tarjeta p-4 text-center">
+    <span class="icono-caja mx-auto mb-3">{% include 'componentes/icono.html' with n='check' %}</span>
+    <h1 class="h2 mb-1">{% if nuevo %}Cuenta creada{% else %}Clave temporal lista{% endif %}</h1>
+    <p class="mb-3"><strong>{{ funcionario.get_full_name }}</strong> · {{ funcionario.rut }}<br>
+      <span class="texto-suave">{{ funcionario.get_tipo_usuario_display }}</span></p>
+
+    <div class="texto-suave small">Clave temporal</div>
+    <div class="fs-2 fw-bold font-monospace my-2" style="letter-spacing:.08em">{{ clave }}</div>
+
+    <div class="alert alert-warning text-start small mt-3 mb-3">
+      <strong>Se muestra solo esta vez.</strong> Entrégala en persona; no la envíes por WhatsApp ni correo.
+      Al ingresar, el sistema le pedirá crear su propia clave.
+    </div>
+    <a href="{% url 'personal_funcionarios' %}" class="btn btn-verde w-100">Volver a funcionarios</a>
+  </div>
+</div>
+{% endblock %}

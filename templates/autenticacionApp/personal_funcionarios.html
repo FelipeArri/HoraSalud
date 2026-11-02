@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}Funcionarios{% endblock %}
+{% block ancho_alertas %}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-end flex-wrap gap-2 mb-3">
+  <div>
+    <div class="etiqueta-seccion">Administrador CESFAM</div>
+    <h1 class="mb-0">Funcionarios</h1>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="{% url 'personal_funcionario_nuevo' %}" class="btn btn-verde">{% include 'componentes/icono.html' with n='usuario' %} Agregar funcionario</a>
+    <a href="{% url 'personal_auditoria' %}" class="btn btn-borde">{% include 'componentes/icono.html' with n='lista' %} Registro de actividad</a>
+  </div>
+</div>
+
+<div class="indicadores">
+  <div class="indicador"><strong>{{ activos|length }}</strong><span>Cuentas activas</span></div>
+  <div class="indicador"><strong>{{ inactivos|length }}</strong><span>Desactivadas</span></div>
+</div>
+
+<div class="tarjeta p-2 p-md-3">
+  <div class="table-responsive">
+  <table class="tabla-nomina">
+    <thead>
+      <tr><th>Funcionario</th><th>RUT</th><th>Cargo</th><th>Alta</th><th>Último ingreso</th><th>Estado</th><th>Acciones</th></tr>
+    </thead>
+    <tbody>
+      {% for f in activos %}{% include 'autenticacionApp/_fila_funcionario.html' %}{% endfor %}
+      {% for f in inactivos %}{% include 'autenticacionApp/_fila_funcionario.html' %}{% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+<p class="texto-suave small mt-2">Las cuentas no se borran: se desactivan, para mantener la trazabilidad de lo que hizo cada funcionario (RN-11).</p>
+{% endblock %}
