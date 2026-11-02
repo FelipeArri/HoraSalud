@@ -27,6 +27,10 @@ TIPOS_CON_INGRESO = [Usuario.Tipo.PACIENTE, Usuario.Tipo.TUTOR, Usuario.Tipo.ADM
 
 
 def _destino(usuario):
+    if usuario.tipo_usuario == Usuario.Tipo.ADMINISTRADOR:
+        return 'personal_funcionarios'
+    if usuario.tipo_usuario == Usuario.Tipo.PROFESIONAL:
+        return 'profesional_agenda'
     if es_some(usuario):
         return 'some_nomina'
     if usuario.tipo_usuario == Usuario.Tipo.TUTOR:

@@ -1,15 +1,17 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import CodigoEnrolamiento, Consentimiento, CredencialPasskey, SolicitudDerechos, Paciente, Profesional, Sector, Usuario
+from .models import (CodigoEnrolamiento, Consentimiento, CredencialPasskey, Paciente, Profesional, RegistroAuditoria,
+                     Sector, SolicitudDerechos, Usuario)
 
 
 @admin.register(Usuario)
 class UsuarioAdmin(UserAdmin):
-    list_display = ('rut', 'first_name', 'last_name', 'tipo_usuario', 'telefono', 'is_staff')
-    list_filter = ('tipo_usuario', 'is_staff')
+    list_display = ('rut', 'first_name', 'last_name', 'tipo_usuario', 'is_active', 'last_login')
+    list_filter = ('tipo_usuario', 'is_active', 'is_staff')
     search_fields = ('rut', 'first_name', 'last_name', 'username')
-    fieldsets = UserAdmin.fieldsets + (('Datos HoraSalud', {'fields': ('rut', 'telefono', 'tipo_usuario')}),)
+    fieldsets = UserAdmin.fieldsets + (('Datos HoraSalud', {'fields': ('rut', 'telefono', 'tipo_usuario', 'debe_cambiar_clave',
+                                                                         'intentos_fallidos', 'bloqueado_hasta')}),)
     add_fieldsets = UserAdmin.add_fieldsets + (('Datos HoraSalud', {'fields': ('rut', 'tipo_usuario')}),)
 
 
@@ -67,3 +69,20 @@ class ConsentimientoAdmin(admin.ModelAdmin):
 class SolicitudDerechosAdmin(admin.ModelAdmin):
     list_display = ('usuario', 'tipo', 'estado', 'creada_en', 'resuelta_por')
     list_filter = ('tipo', 'estado')
+
+
+@admin.register(RegistroAuditoria)
+class RegistroAuditoriaAdmin(admin.ModelAdmin):
+    """B-20 · RN-11: solo lectura."""
+    list_display = ('fecha', 'actor_rut', 'accion', 'objetivo_rut', 'detalle', 'ip')
+    list_filter = ('accion',)
+    search_fields = ('actor_rut', 'objetivo_rut')
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False

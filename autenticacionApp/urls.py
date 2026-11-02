@@ -1,8 +1,17 @@
 from django.urls import path
 
-from . import views, views_privacidad as privacidad
+from . import views, views_personal as personal, views_privacidad as privacidad
 
 urlpatterns = [
+    # Personal del CESFAM (B-20): RUT + clave
+    path('personal/ingresar/', personal.ingresar, name='personal_ingresar'),
+    path('personal/cambiar-clave/', personal.cambiar_clave, name='personal_cambiar_clave'),
+    path('personal/funcionarios/', personal.funcionarios, name='personal_funcionarios'),
+    path('personal/funcionarios/nuevo/', personal.funcionario_nuevo, name='personal_funcionario_nuevo'),
+    path('personal/funcionarios/<uuid:pk>/<slug:accion>/', personal.funcionario_accion,
+         name='personal_funcionario_accion'),
+    path('personal/auditoria/', personal.auditoria, name='personal_auditoria'),
+    path('profesional/agenda/', personal.profesional_agenda, name='profesional_agenda'),
     path('ingresar/', views.ingresar, name='ingresar'),
     path('ingresar/verificar/', views.verificar, name='verificar'),
     path('ingresar/a-cargo/', views.elegir_paciente, name='elegir_paciente'),

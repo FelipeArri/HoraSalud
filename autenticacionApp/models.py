@@ -31,11 +31,22 @@ class Usuario(AbstractUser):
         TUTOR = 'tutor', 'Tutor'
         ADMINISTRATIVO = 'administrativo', 'Administrativo SOME'
         PROFESIONAL = 'profesional', 'Profesional'
+        ADMINISTRADOR = 'administrador', 'Administrador CESFAM'  # B-20: Dirección, gestiona al personal
+
+    PERSONAL = (Tipo.ADMINISTRATIVO, Tipo.PROFESIONAL, Tipo.ADMINISTRADOR)  # entran con RUT + clave
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     rut = models.CharField(max_length=12, unique=True, null=True, blank=True, validators=[validar_rut])
     telefono = CampoCifrado(blank=True, largo_maximo=20)  # cifrado en reposo (B-07)
     tipo_usuario = models.CharField(max_length=20, choices=Tipo.choices, default=Tipo.PACIENTE)
+    # B-20: ingreso del personal con clave (bloqueo por intentos, clave temporal)
+    debe_cambiar_clave = models.BooleanField('debe cambiar su clave', default=False)
+    intentos_fallidos = models.PositiveSmallIntegerField(default=0)
+    bloqueado_hasta = models.DateTimeField(null=True, blank=True)
+
+    @property
+    def es_personal(self):
+        return self.tipo_usuario in self.PERSONAL
 
     def save(self, *args, **kwargs):
         if self.rut:
@@ -155,6 +166,47 @@ class Consentimiento(models.Model):
     def __str__(self):
         estado = 'retirado' if self.retirado_en else ('aceptado' if self.aceptado else 'rechazado')
         return f'{self.usuario} · v{self.version} · {estado}'
+
+
+class RegistroAuditoria(models.Model):
+    """
+    B-20 · RN-11: quién hizo qué y cuándo con las cuentas del personal. No se edita
+    ni se borra desde la app. Guarda el RUT aparte por si la cuenta se desactiva.
+    """
+
+    class Accion(models.TextChoices):
+        INGRESO = 'ingreso', 'Ingreso al sistema'
+        INGRESO_FALLIDO = 'ingreso_fallido', 'Clave incorrecta al ingresar'
+        CUENTA_BLOQUEADA = 'cuenta_bloqueada', 'Cuenta bloqueada por intentos'
+        CAMBIO_CLAVE = 'cambio_clave', 'Cambió su clave'
+        ALTA = 'alta', 'Agregó un funcionario'
+        DESACTIVACION = 'desactivacion', 'Desactivó un funcionario'
+        REACTIVACION = 'reactivacion', 'Reactivó un funcionario'
+        CLAVE_TEMPORAL = 'clave_temporal', 'Entregó clave temporal'
+        REAUTENTICACION_FALLIDA = 'reauth_fallida', 'Clave de confirmación incorrecta'
+        SESION_CERRADA = 'sesion_cerrada', 'Sesión cerrada por 3 claves incorrectas'
+        # B-21 · agendas
+        AGENDA = 'agenda', 'Cargó o generó agendas'
+        AUSENCIA = 'ausencia', 'Registró ausencia de profesional'
+        SOBRECUPO = 'sobrecupo', 'Dio hora en ventanilla / sobrecupo'
+        PROXIMO_CONTROL = 'proximo_control', 'Agendó o indicó próximo control'
+
+    fecha = models.DateTimeField(auto_now_add=True)
+    actor = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    actor_rut = models.CharField('RUT de quien actúa', max_length=12, blank=True)
+    accion = models.CharField(max_length=20, choices=Accion.choices)
+    objetivo = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    objetivo_rut = models.CharField('RUT afectado', max_length=12, blank=True)
+    detalle = models.CharField(max_length=200, blank=True)
+    ip = models.GenericIPAddressField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'registro de auditoría'
+        verbose_name_plural = 'Registro de auditoría (personal)'
+        ordering = ['-fecha']
+
+    def __str__(self):
+        return f'{self.fecha:%d-%m-%Y %H:%M} · {self.actor_rut} · {self.get_accion_display()}'
 
 
 class SolicitudDerechos(models.Model):

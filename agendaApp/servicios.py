@@ -42,7 +42,8 @@ def bloques_reservables(especialidad):
     ahora = timezone.localtime()
     bloques = (BloqueHorario.objects
                .filter(estado=BloqueHorario.Estado.DISPONIBLE, agenda__especialidad=especialidad,
-                       agenda__fecha__gte=ahora.date(), agenda__fecha__lte=_limite_reserva())
+                       agenda__fecha__gte=ahora.date(), agenda__fecha__lte=_limite_reserva(),
+                       tipo_cupo=BloqueHorario.TipoCupo.PROGRAMADO)  # B-21: ventanilla no se ve en la app
                .select_related('agenda__profesional__usuario', 'agenda__especialidad'))
     return [b for b in bloques if inicio_bloque(b) > ahora]
 
@@ -63,6 +64,8 @@ def reservar_hora(paciente, bloque_id):
         # select_for_update: si dos personas confirman a la vez, la segunda espera y luego ve el bloque tomado
         bloque = (BloqueHorario.objects.select_for_update()
                   .select_related('agenda__especialidad').get(pk=bloque_id))
+        if bloque.tipo_cupo != BloqueHorario.TipoCupo.PROGRAMADO:
+            raise ReglaNegocioError('Ese horario se entrega solo en el SOME del CESFAM.')  # B-21
         if bloque.estado != BloqueHorario.Estado.DISPONIBLE:
             raise ReglaNegocioError('Ese horario acaba de ser tomado por otra persona. Elige otro, por favor.')
         if inicio_bloque(bloque) <= timezone.localtime():
@@ -76,9 +79,12 @@ def reservar_hora(paciente, bloque_id):
                                     'Si necesitas otra, primero cancela la que tienes.')  # RN-01
         try:
             with transaction.atomic():
-                return Hora.objects.create(bloque=bloque, paciente=paciente)
+                hora = Hora.objects.create(bloque=bloque, paciente=paciente)
         except IntegrityError:  # RN-02: la base de datos impide la doble reserva
             raise ReglaNegocioError('Ese horario acaba de ser tomado por otra persona. Elige otro, por favor.')
+    from .gestion_agendas import resolver_indicacion_al_reservar
+    resolver_indicacion_al_reservar(hora)  # P-10: ya pidió su control
+    return hora
 
 
 def cancelar_hora(hora, motivo, quien='Paciente'):
