@@ -95,6 +95,7 @@ class Command(BaseCommand):
                 'sector': sectores[i % 3],
                 'ficha_clinica_id': f'FC-{1000 + i}',
                 'tutor': tutores[i] if i < len(tutores) else None,  # RF-03: dos pacientes con tutor
+                'tramo': 'ABCD'[i % 4],  # igual que el FONASA simulado (B-18)
             })
             pacientes.append(paciente)
 

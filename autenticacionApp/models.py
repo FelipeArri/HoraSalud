@@ -55,6 +55,23 @@ class Paciente(models.Model):
     tutor = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, blank=True,
                               related_name='dependientes', limit_choices_to={'tipo_usuario': 'tutor'})
 
+    # B-18 / B-19: datos leidos de FONASA y del sistema clinico (no se guarda el domicilio)
+    class Prevision(models.TextChoices):
+        FONASA = 'fonasa', 'FONASA'
+        ISAPRE = 'isapre', 'ISAPRE'
+        DIPRECA = 'dipreca', 'DIPRECA'
+        CAPREDENA = 'capredena', 'CAPREDENA'
+        SIN_PREVISION = 'sin_prevision', 'Sin previsión'
+
+    class Estado(models.TextChoices):
+        VIGENTE = 'vigente', 'Vigente'
+        NO_VIGENTE = 'no_vigente', 'No vigente'
+
+    prevision = models.CharField('previsión', max_length=15, choices=Prevision.choices, default=Prevision.FONASA)
+    tramo = models.CharField('tramo FONASA', max_length=1, blank=True)
+    estado_inscripcion = models.CharField('estado', max_length=10, choices=Estado.choices, default=Estado.VIGENTE)
+    prevision_consultada_en = models.DateTimeField('última consulta a FONASA', null=True, blank=True)
+
     def __str__(self):
         return str(self.usuario)
 

@@ -6,49 +6,103 @@
 <div class="angosto">
   <a class="volver" href="{% url 'some_nomina' %}">{% include 'componentes/icono.html' with n='atras' %}Volver a la nómina</a>
   <div class="etiqueta-seccion">Panel SOME</div>
-  <h1 class="mb-3">Activar huella de un paciente</h1>
+  <h1 class="mb-1">Activar huella de un paciente</h1>
+  <p class="texto-suave mb-3">HoraSalud consulta el sistema clínico del CESFAM y FONASA antes de entregar el código.</p>
 
   {% if codigo %}
     <div class="tarjeta p-4 text-center">
       <div class="check-exito">{% include 'componentes/icono.html' with n='check' %}</div>
-      <p class="mb-1">Código para <strong>{{ usuario.get_full_name }}</strong></p>
+      <p class="mb-1">Código para <strong>{{ consulta.nombre }}</strong></p>
       <div class="display-5 fw-bold my-2" style="letter-spacing:.12em">{{ codigo }}</div>
-      <p class="texto-suave mb-3">Vence en {{ vigencia_min }} minutos y sirve una sola vez. Se muestra solo ahora: díctaselo al paciente o anótalo en un papel.</p>
+      <p class="texto-suave mb-3">Vence en {{ vigencia_min }} minutos y sirve una sola vez. Se muestra solo ahora: díctaselo a la persona o anótalo en un papel.</p>
       <div class="aviso-demo text-start">
-        El paciente entra a <strong>{{ url_activar }}</strong>
-        en su teléfono, escribe su RUT y este código, y registra su huella.
+        La persona entra a <strong>{{ url_activar }}</strong>
+        en su teléfono, escribe su RUT y este código, acepta la política de privacidad y registra su huella.
       </div>
-      <a href="{% url 'some_enrolar' %}" class="btn btn-borde btn-lg w-100 mt-3">Activar a otro paciente</a>
+      <a href="{% url 'some_enrolar' %}" class="btn btn-borde btn-lg w-100 mt-3">Atender a otra persona</a>
     </div>
-  {% else %}
-    <div class="tarjeta p-4">
-      <form method="{% if usuario %}post{% else %}get{% endif %}" novalidate>
-        {% csrf_token %}
-        <label for="id_rut" class="form-label fw-semibold">RUT del paciente o tutor</label>
-        <input type="text" name="rut" id="id_rut" value="{{ form.rut.value|default:'' }}"
-               class="form-control form-control-lg campo-rut {% if form.rut.errors %}is-invalid{% endif %}"
-               placeholder="12.345.678-9" maxlength="12" {% if usuario %}readonly{% else %}autofocus{% endif %}>
-        {% for error in form.rut.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
 
-        {% if usuario %}
-          <div class="tarjeta mt-3 d-flex gap-3 align-items-center">
-            <span class="avatar">{{ usuario.first_name|first }}</span>
-            <div>
-              <strong class="d-block">{{ usuario.get_full_name }}</strong>
-              <span class="texto-suave small">{{ usuario.get_tipo_usuario_display }} · {{ usuario.passkeys.count }} dispositivo(s) registrados</span>
-            </div>
+  {% else %}
+    <form method="get" class="tarjeta p-4" novalidate>
+      <label for="id_rut" class="form-label fw-semibold">RUT de la persona</label>
+      <input type="text" name="rut" id="id_rut" value="{{ form.rut.value|default:'' }}"
+             class="form-control form-control-lg campo-rut {% if form.rut.errors %}is-invalid{% endif %}"
+             placeholder="12.345.678-9" maxlength="12" {% if not consulta %}autofocus{% endif %}>
+      {% for error in form.rut.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+      <button type="submit" class="btn {% if consulta %}btn-borde{% else %}btn-verde{% endif %} btn-lg w-100 mt-3">Consultar</button>
+    </form>
+
+    {% if consulta %}
+      <div class="tarjeta mt-3">
+        <div class="d-flex gap-3 align-items-center mb-3">
+          <span class="avatar">{{ consulta.nombre|default:'?'|first }}</span>
+          <div>
+            <strong class="d-block">{{ consulta.nombre|default:'Persona sin registro' }}</strong>
+            <span class="texto-suave small">{{ consulta.rut }}</span>
           </div>
-          <label class="opcion mt-3">
-            <input type="checkbox" name="cedula_validada" value="si" required>
-            <span>Revisé la <strong>cédula de identidad</strong> en persona y coincide con este RUT.</span>
-          </label>
-          <button type="submit" class="btn btn-verde btn-lg w-100">Generar código de un solo uso</button>
-          <a href="{% url 'some_enrolar' %}" class="btn btn-borde btn-lg w-100 mt-2">Buscar otro RUT</a>
+        </div>
+
+        {% if consulta.es_tutor %}
+          <div class="fila-chequeo ok">{% include 'componentes/icono.html' with n='check' %}<span><strong>Tutor o cuidador</strong> registrado en HoraSalud: no requiere inscripción ni FONASA.</span></div>
         {% else %}
-          <button type="submit" class="btn btn-verde btn-lg w-100 mt-3">Buscar</button>
+          <div class="fila-chequeo {% if consulta.inscripcion.inscrito %}ok{% else %}mal{% endif %}">
+            {% if consulta.inscripcion.inscrito %}{% include 'componentes/icono.html' with n='check' %}{% else %}{% include 'componentes/icono.html' with n='x' %}{% endif %}
+            <span><strong>Sistema clínico:</strong>
+              {% if consulta.inscripcion.inscrito %}inscrito · {{ consulta.inscripcion.sector|default:'sin sector' }}{% else %}no inscrito en el CESFAM{% endif %}</span>
+          </div>
+          {% if consulta.prevision %}
+          <div class="fila-chequeo {% if consulta.prevision.prevision == 'fonasa' %}ok{% else %}mal{% endif %}">
+            {% if consulta.prevision.prevision == 'fonasa' %}{% include 'componentes/icono.html' with n='check' %}{% else %}{% include 'componentes/icono.html' with n='x' %}{% endif %}
+            <span><strong>Previsión:</strong> {{ consulta.tramo_texto }}</span>
+          </div>
+          {% endif %}
         {% endif %}
-      </form>
-    </div>
+
+        {% if consulta.usuario and consulta.dispositivos %}
+          <div class="fila-chequeo aviso">{% include 'componentes/icono.html' with n='huella' %}<span>Ya tiene <strong>{{ consulta.dispositivos }} dispositivo(s)</strong> con huella activa.</span></div>
+        {% endif %}
+        {% if consulta.codigo_vigente %}
+          <div class="fila-chequeo aviso">{% include 'componentes/icono.html' with n='reloj' %}<span>Ya tiene un <strong>código vigente</strong> entregado por {{ consulta.codigo_vigente.creado_por.get_full_name|default:'el SOME' }} el {{ consulta.codigo_vigente.creado_en|date:"d-m-Y H:i" }} (vence a las {{ consulta.codigo_vigente.expira_en|time:"H:i" }}).</span></div>
+        {% endif %}
+      </div>
+
+      {% if consulta.puede_recibir_codigo %}
+        <form method="post" class="tarjeta mt-3">
+          {% csrf_token %}
+          <input type="hidden" name="rut" value="{{ consulta.rut }}">
+          <label class="opcion">
+            <input type="checkbox" name="cedula_validada" value="si" required>
+            <span>Revisé la <strong>cédula de identidad</strong> en persona y coincide con este nombre y RUT.</span>
+          </label>
+          {% if consulta.codigo_vigente %}
+          <label class="opcion">
+            <input type="checkbox" name="reemplazar" value="si" required>
+            <span>Entregar un código nuevo (el anterior deja de servir).</span>
+          </label>
+          {% endif %}
+          <button type="submit" class="btn btn-verde btn-lg w-100">Generar código de un solo uso</button>
+        </form>
+      {% else %}
+        <div class="alert alert-warning mt-3 mb-0" role="alert">
+          <strong>No se puede entregar código.</strong> {{ consulta.motivo_rechazo }}
+        </div>
+      {% endif %}
+    {% endif %}
   {% endif %}
+
+  <p class="texto-suave small mt-3">Prototipo: el sistema clínico y FONASA están <strong>simulados</strong> con RUT ficticios (patrón Adapter).</p>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function () {
+    var rut = document.getElementById('id_rut');
+    if (!rut) return;
+    rut.addEventListener('input', function () {
+      var l = rut.value.replace(/[^0-9kK]/g, '').toUpperCase().slice(0, 9);
+      rut.value = l.length < 2 ? l : l.slice(0, -1).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + '-' + l.slice(-1);
+    });
+  })();
+</script>
 {% endblock %}

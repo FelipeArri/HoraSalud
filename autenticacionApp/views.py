@@ -16,7 +16,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from . import passkeys, privacidad
+from . import inscripcion, passkeys, privacidad
 from .forms import EnrolamientoForm, IngresoRutForm
 from .models import CodigoEnrolamiento, Usuario
 from .sesion import CLAVE_PACIENTE, es_some, pacientes_a_cargo, requiere_some
@@ -173,19 +173,27 @@ def passkey_registro_verificar(request):
 
 @requiere_some
 def some_enrolar(request):
-    """El funcionario busca al paciente por RUT, valida su cedula EN PERSONA y genera el codigo."""
+    """
+    B-18: el funcionario escribe el RUT; HoraSalud consulta el sistema clinico y FONASA.
+    Solo si la persona esta inscrita y tiene FONASA vigente (o es tutor), el funcionario
+    revisa la cedula EN PERSONA y genera el codigo de un solo uso.
+    """
     form = IngresoRutForm(request.POST or request.GET or None)
-    usuario, codigo = None, None
+    consulta, codigo = None, None
     if form.is_bound and form.is_valid():
-        usuario = passkeys.usuario_por_rut(form.cleaned_data['rut'], [Usuario.Tipo.PACIENTE, Usuario.Tipo.TUTOR])
-        if usuario is None:
-            form.add_error('rut', 'No hay un paciente o tutor inscrito con ese RUT.')
-        elif request.method == 'POST' and request.POST.get('cedula_validada') == 'si':
-            codigo = passkeys.generar_codigo(usuario, request.user)
-        elif request.method == 'POST':
-            messages.error(request, 'Confirma que revisaste la cédula de identidad en persona.')
+        consulta = inscripcion.consultar(form.cleaned_data['rut'])  # siempre se vuelve a consultar
+        if request.method == 'POST':
+            if not consulta.puede_recibir_codigo:
+                messages.error(request, consulta.motivo_rechazo)
+            elif request.POST.get('cedula_validada') != 'si':
+                messages.error(request, 'Confirma que revisaste la cédula de identidad en persona.')
+            elif consulta.codigo_vigente and request.POST.get('reemplazar') != 'si':
+                messages.error(request, 'Ya tiene un código vigente. Confirma que quieres reemplazarlo.')
+            else:
+                usuario = inscripcion.registrar_paciente(consulta)
+                codigo = passkeys.generar_codigo(usuario, request.user)
     return render(request, 'autenticacionApp/some_enrolar.html', {
-        'form': form, 'usuario': usuario, 'codigo': codigo,
+        'form': form, 'consulta': consulta, 'codigo': codigo,
         'url_activar': passkeys.url_publica(request, reverse('enrolar')),
         'vigencia_min': int(passkeys.VIGENCIA_CODIGO.total_seconds() // 60)})
 
