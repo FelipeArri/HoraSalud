@@ -17,3 +17,7 @@ db_pruebas.sqlite3
 .DS_Store
 Thumbs.db
 .vscode/
+
+# Reportes Excel generados (exportar_padron, exportar_inscritos)
+reportes/
+db_pruebas_fonasa.sqlite3

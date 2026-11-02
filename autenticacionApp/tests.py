@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase
 from rest_framework.test import APITestCase
 
-from .adapter_inscripcion import AdapterInscripcionFonasa
+from .adapter_inscripcion import AdapterFonasa, AdapterSistemaClinico
 from .validators import calcular_dv, validar_rut
 
 User = get_user_model()
@@ -67,13 +67,24 @@ class ClienteFalso:
         return self.respuesta
 
 
-class AdapterInscripcionTests(APITestCase):
-    def test_rut_inscrito_asigna_sector(self):
-        # RF-01 escenario positivo (datos ficticios)
-        adapter = AdapterInscripcionFonasa(ClienteFalso({'vigente': True, 'comuna': 'La Granja - Sector 2'}))
-        self.assertEqual(adapter.consultar_inscripcion('11111111-1'), {'vigente': True, 'sector': 2})
+class AdapterTests(APITestCase):
+    """Patron Adapter (D26-C03): traducen el formato de cada sistema externo al de HoraSalud."""
 
-    def test_rut_no_inscrito(self):
-        # RF-01 escenario negativo
-        adapter = AdapterInscripcionFonasa(ClienteFalso(None))
-        self.assertEqual(adapter.consultar_inscripcion('22222222-2'), {'vigente': False, 'sector': None})
+    def test_sistema_clinico_inscrito(self):
+        ficha = {'nombres': 'Ana', 'apellido_paterno': 'Prueba', 'apellido_materno': 'Ficticia',
+                 'sector': 'SECTOR 2', 'estado_inscripcion': 'ACTIVA', 'fono': '+569'}
+        datos = AdapterSistemaClinico(ClienteFalso(ficha)).consultar_inscripcion('11111111-1')
+        self.assertEqual((datos['inscrito'], datos['apellidos'], datos['sector']), (True, 'Prueba Ficticia', 'Sector 2'))
+
+    def test_sistema_clinico_sin_registro_o_pasivo(self):
+        self.assertFalse(AdapterSistemaClinico(ClienteFalso(None)).consultar_inscripcion('1-9')['inscrito'])
+        pasivo = {'estado_inscripcion': 'PASIVA'}
+        self.assertFalse(AdapterSistemaClinico(ClienteFalso(pasivo)).consultar_inscripcion('1-9')['inscrito'])
+
+    def test_fonasa_tramo_e_isapre(self):
+        fonasa = AdapterFonasa(ClienteFalso({'codigo_prevision': 'FONASA', 'tramo': 'B', 'afiliado_vigente': True}))
+        self.assertEqual(fonasa.consultar_prevision('1-9'), {'prevision': 'fonasa', 'tramo': 'B', 'vigente': True})
+        isapre = AdapterFonasa(ClienteFalso({'codigo_prevision': 'ISAPRE', 'afiliado_vigente': True}))
+        self.assertEqual(isapre.consultar_prevision('1-9')['prevision'], 'isapre')
+        sin = AdapterFonasa(ClienteFalso(None))
+        self.assertEqual(sin.consultar_prevision('1-9')['prevision'], 'sin_prevision')

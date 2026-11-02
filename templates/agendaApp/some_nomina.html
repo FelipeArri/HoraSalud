@@ -11,6 +11,7 @@
   </div>
   <div class="d-flex gap-2 flex-wrap">
     <a href="{% url 'some_enrolar' %}" class="btn btn-verde">{% include 'componentes/icono.html' with n='huella' %} Activar huella de paciente</a>
+    <a href="{% url 'some_no_vigentes' %}" class="btn btn-borde">Pacientes no vigentes{% if no_vigentes %} <span class="estado estado-cancelada ms-1">{{ no_vigentes }}</span>{% endif %}</a>
     <a href="{% url 'sala_espera' %}" target="_blank" rel="noopener" class="btn btn-borde">{% include 'componentes/icono.html' with n='monitor' %} Pantalla de sala</a>
   </div>
 </div>

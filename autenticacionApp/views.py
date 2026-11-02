@@ -8,7 +8,6 @@ Enrolamiento: el SOME valida la cedula en persona y entrega un codigo de un solo
 Modo demostracion (solo con DJANGO_DEBUG=True): permite entrar sin passkey
 para probar el resto del sistema con los usuarios ficticios.
 """
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.http import Http404, JsonResponse
@@ -17,7 +16,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from . import passkeys
+from . import inscripcion, passkeys, privacidad
 from .forms import EnrolamientoForm, IngresoRutForm
 from .models import CodigoEnrolamiento, Usuario
 from .sesion import CLAVE_PACIENTE, es_some, pacientes_a_cargo, requiere_some
@@ -73,22 +72,22 @@ def verificar(request):
         return redirect('ingresar')
     if request.method == 'POST':
         # Boton "entrar sin huella": SOLO en modo demostracion
-        if not settings.HORASALUD_INGRESO_DEMO:
+        if not passkeys.modo_demo_permitido(request):
             raise Http404
         _iniciar_sesion(request, usuario)
         return redirect(_destino(usuario))
     return render(request, 'autenticacionApp/verificar.html', {
         'usuario': usuario,
-        'tiene_passkey': usuario.passkeys.exists(),
-        'modo_demo': settings.HORASALUD_INGRESO_DEMO,
-        'rp_id': settings.WEBAUTHN_RP_ID,
+        'tiene_passkey': passkeys.passkeys_del_dominio(request, usuario).exists(),
+        'modo_demo': passkeys.modo_demo_permitido(request),
+        'rp_id': passkeys.rp_id_para(request),
     })
 
 
 @require_POST
 def passkey_ingreso_opciones(request):
     usuario = _usuario_pendiente(request)
-    if usuario is None or not usuario.passkeys.exists():
+    if usuario is None or not passkeys.passkeys_del_dominio(request, usuario).exists():
         return _error_json('Primero escribe tu RUT.', 403)
     return JsonResponse({'ok': True, 'opciones': passkeys.opciones_ingreso(request, usuario)})
 
@@ -121,7 +120,7 @@ def enrolar(request):
             form.add_error('codigo', str(error))
         else:
             request.session[CLAVE_ENROLANDO] = codigo.pk
-            return redirect('enrolar_huella')
+            return redirect('enrolar_consentimiento')  # B-07: primero acepta la politica
     return render(request, 'autenticacionApp/enrolar.html', {'form': form})
 
 
@@ -137,8 +136,10 @@ def enrolar_huella(request):
     if codigo is None:
         messages.warning(request, 'Escribe tu RUT y el código que te entregó el SOME.')
         return redirect('enrolar')
+    if not privacidad.consentimiento_vigente(codigo.usuario):
+        return redirect('enrolar_consentimiento')
     return render(request, 'autenticacionApp/enrolar_huella.html', {
-        'usuario': codigo.usuario, 'rp_id': settings.WEBAUTHN_RP_ID})
+        'usuario': codigo.usuario, 'rp_id': passkeys.rp_id_para(request)})
 
 
 @require_POST
@@ -146,6 +147,8 @@ def passkey_registro_opciones(request):
     codigo = _codigo_en_curso(request)
     if codigo is None:
         return _error_json('El código venció. Pide uno nuevo en el SOME.', 403)
+    if not privacidad.consentimiento_vigente(codigo.usuario):
+        return _error_json('Primero debes aceptar la política de privacidad.', 403)
     return JsonResponse({'ok': True, 'opciones': passkeys.opciones_registro(request, codigo.usuario)})
 
 
@@ -170,19 +173,28 @@ def passkey_registro_verificar(request):
 
 @requiere_some
 def some_enrolar(request):
-    """El funcionario busca al paciente por RUT, valida su cedula EN PERSONA y genera el codigo."""
+    """
+    B-18: el funcionario escribe el RUT; HoraSalud consulta el sistema clinico y FONASA.
+    Solo si la persona esta inscrita y tiene FONASA vigente (o es tutor), el funcionario
+    revisa la cedula EN PERSONA y genera el codigo de un solo uso.
+    """
     form = IngresoRutForm(request.POST or request.GET or None)
-    usuario, codigo = None, None
+    consulta, codigo = None, None
     if form.is_bound and form.is_valid():
-        usuario = passkeys.usuario_por_rut(form.cleaned_data['rut'], [Usuario.Tipo.PACIENTE, Usuario.Tipo.TUTOR])
-        if usuario is None:
-            form.add_error('rut', 'No hay un paciente o tutor inscrito con ese RUT.')
-        elif request.method == 'POST' and request.POST.get('cedula_validada') == 'si':
-            codigo = passkeys.generar_codigo(usuario, request.user)
-        elif request.method == 'POST':
-            messages.error(request, 'Confirma que revisaste la cédula de identidad en persona.')
+        consulta = inscripcion.consultar(form.cleaned_data['rut'])  # siempre se vuelve a consultar
+        if request.method == 'POST':
+            if not consulta.puede_recibir_codigo:
+                messages.error(request, consulta.motivo_rechazo)
+            elif request.POST.get('cedula_validada') != 'si':
+                messages.error(request, 'Confirma que revisaste la cédula de identidad en persona.')
+            elif consulta.codigo_vigente and request.POST.get('reemplazar') != 'si':
+                messages.error(request, 'Ya tiene un código vigente. Confirma que quieres reemplazarlo.')
+            else:
+                usuario = inscripcion.registrar_paciente(consulta)
+                codigo = passkeys.generar_codigo(usuario, request.user)
     return render(request, 'autenticacionApp/some_enrolar.html', {
-        'form': form, 'usuario': usuario, 'codigo': codigo,
+        'form': form, 'consulta': consulta, 'codigo': codigo,
+        'url_activar': passkeys.url_publica(request, reverse('enrolar')),
         'vigencia_min': int(passkeys.VIGENCIA_CODIGO.total_seconds() // 60)})
 
 
@@ -192,6 +204,8 @@ def elegir_paciente(request):
     """RF-03: el tutor elige a quien le pedira la hora."""
     if not request.user.is_authenticated or request.user.tipo_usuario != Usuario.Tipo.TUTOR:
         return redirect('ingresar')
+    if not privacidad.consentimiento_vigente(request.user):
+        return redirect('aceptar_politica')
     a_cargo = pacientes_a_cargo(request.user)
     if request.method == 'POST':
         elegido = a_cargo.filter(pk=request.POST.get('paciente')).first()
@@ -206,4 +220,6 @@ def elegir_paciente(request):
 def salir(request):
     logout(request)  # borra la sesion completa
     messages.info(request, 'Cerraste tu sesión de forma segura.')
-    return redirect('inicio')
+    respuesta = redirect('inicio')
+    respuesta['Clear-Site-Data'] = '"cache"'  # DEF-03: borra las copias de paginas privadas
+    return respuesta

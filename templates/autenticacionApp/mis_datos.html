@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}Mis datos{% endblock %}
+{% block ancho_alertas %}medio{% endblock %}
+
+{% block content %}
+<div class="medio">
+  <div class="etiqueta-seccion">Privacidad</div>
+  <h1 class="mb-1">Mis datos</h1>
+  <p class="texto-suave mb-3">Lo que HoraSalud guarda de ti y lo que puedes hacer con ello (Ley 21.719).</p>
+
+  <div class="tarjeta">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+      <h2 class="h5 mb-0">Mis datos personales</h2>
+      <a href="{% url 'descargar_mis_datos' %}" class="btn btn-borde">{% include 'componentes/icono.html' with n='lista' %} Descargar todo</a>
+    </div>
+    <dl class="resumen mb-0 row">
+      <div class="col-sm-6"><dt>Nombre</dt><dd>{{ user.get_full_name }}</dd></div>
+      <div class="col-sm-6"><dt>RUT</dt><dd>{{ user.rut }}</dd></div>
+      <div class="col-sm-6"><dt>Teléfono</dt><dd>{{ user.telefono|default:'—' }} <span class="texto-suave small fw-normal">(guardado cifrado)</span></dd></div>
+      {% if paciente %}
+      <div class="col-sm-6"><dt>Sector</dt><dd>{{ paciente.sector.nombre|default:'—' }}</dd></div>
+      {% endif %}
+    </dl>
+    <p class="texto-suave small mb-0">¿Algún dato está mal? Pide corregirlo más abajo.</p>
+  </div>
+
+  <div class="tarjeta">
+    <h2 class="h5">Dispositivos con los que entras</h2>
+    <p class="texto-suave small">Tu huella nunca sale del dispositivo: aquí solo hay una llave pública.</p>
+    {% for d in dispositivos %}
+      <div class="d-flex justify-content-between align-items-center gap-2 py-2 {% if not forloop.last %}border-bottom{% endif %}">
+        <div>
+          <strong class="d-block">{% include 'componentes/icono.html' with n='telefono' %} {{ d.dispositivo|default:'Dispositivo' }}</strong>
+          <span class="texto-suave small">Activado {{ d.creada_en|date:"d-m-Y" }} · Último uso {{ d.ultimo_uso|date:"d-m-Y H:i"|default:'—' }}</span>
+        </div>
+        <form method="post" action="{% url 'borrar_dispositivo' d.pk %}" onsubmit="return confirm('¿Quitar este dispositivo? Ya no podrá entrar con tu huella.');">
+          {% csrf_token %}<button class="btn btn-rojo-borde">Quitar</button>
+        </form>
+      </div>
+    {% empty %}
+      <p class="texto-suave mb-0">No tienes dispositivos activos.</p>
+    {% endfor %}
+  </div>
+
+  <div class="tarjeta">
+    <h2 class="h5">Pedir algo sobre mis datos</h2>
+    <form method="post" action="{% url 'solicitar_derecho' %}">
+      {% csrf_token %}
+      {% for valor, texto in tipos_solicitud %}
+        <label class="opcion"><input type="radio" name="tipo" value="{{ valor }}" required> <span>{{ texto }}</span></label>
+      {% endfor %}
+      <label for="detalle" class="form-label fw-semibold mt-2">Detalle (opcional)</label>
+      <textarea name="detalle" id="detalle" class="form-control" rows="2" maxlength="500" placeholder="Por ejemplo: mi teléfono cambió."></textarea>
+      <button type="submit" class="btn btn-verde w-100 mt-2">Enviar solicitud al SOME</button>
+    </form>
+    {% if solicitudes %}
+      <div class="etiqueta-seccion mt-3 mb-1">Mis solicitudes</div>
+      {% for s in solicitudes %}
+        <div class="d-flex justify-content-between gap-2 py-1 small">
+          <span>{{ s.get_tipo_display }} · {{ s.creada_en|date:"d-m-Y" }}{% if s.respuesta %}<br><span class="texto-suave">Respuesta: {{ s.respuesta }}</span>{% endif %}</span>
+          <span class="estado {% if s.estado == 'resuelta' %}estado-confirmada{% else %}estado-reservada{% endif %}">{{ s.get_estado_display }}</span>
+        </div>
+      {% endfor %}
+    {% endif %}
+  </div>
+
+  <div class="tarjeta">
+    <h2 class="h5">Mi consentimiento</h2>
+    {% if consentimiento %}
+      <p class="mb-2">Aceptaste la política <strong>versión {{ consentimiento.version }}</strong> el {{ consentimiento.fecha|date:"d-m-Y \a \l\a\s H:i" }}. <a href="{% url 'politica' %}">Leerla otra vez</a></p>
+    {% endif %}
+    <form method="post" action="{% url 'retirar_consentimiento' %}" onsubmit="return confirm('Se desactivará tu ingreso con huella y se cerrará tu sesión. ¿Continuar?');">
+      {% csrf_token %}
+      <button class="btn btn-rojo-borde w-100">Retirar mi consentimiento</button>
+    </form>
+    <p class="texto-suave small mt-2 mb-0">Puedes seguir pidiendo horas en la ventanilla del SOME.</p>
+  </div>
+</div>
+{% endblock %}

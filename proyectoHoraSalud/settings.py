@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'listaEsperaApp',     # RF-06
     'notificacionesApp',  # Factory Method + Strategy
     'pantallaApp',        # Pantalla de la sala de espera
+    'fonasaSimuladoApp',  # FONASA simulado: sistema EXTERNO, en su propia base
 ]
 
 MIDDLEWARE = [
@@ -43,6 +44,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'proyectoHoraSalud.middleware.SinCacheParaSesionMiddleware',  # DEF-03
 ]
 
 ROOT_URLCONF = 'proyectoHoraSalud.urls'
@@ -73,7 +75,11 @@ if os.getenv('DB_ENGINE') == 'sqlite':
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db_pruebas.sqlite3',
-        }
+        },
+        'fonasa': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db_pruebas_fonasa.sqlite3',
+        },
     }
 else:
     DATABASES = {
@@ -88,8 +94,24 @@ else:
                 'init_command': "SET sql_mode='STRICT_ALL_TABLES'",
                 'charset': 'utf8mb4',
             },
-        }
+        },
+        # FONASA simulado: sistema EXTERNO en su propia base (mismo MySQL de XAMPP)
+        'fonasa': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': os.getenv('FONASA_DB_NAME', 'fonasa_simulado'),
+            'USER': os.getenv('DB_USER'),
+            'PASSWORD': os.getenv('DB_PASSWORD'),
+            'HOST': os.getenv('DB_HOST', '127.0.0.1'),
+            'PORT': os.getenv('DB_PORT', '3306'),
+            'OPTIONS': {
+                'init_command': "SET sql_mode='STRICT_ALL_TABLES'",
+                'charset': 'utf8mb4',
+            },
+        },
     }
+
+# Todo lo de fonasaSimuladoApp va a la base 'fonasa'; lo demas a horasalud_db
+DATABASE_ROUTERS = ['fonasaSimuladoApp.router.RouterFonasa']
 
 # Usuario propio con RUT y tipo de usuario (RF-01). Debe definirse antes del primer migrate.
 AUTH_USER_MODEL = 'autenticacionApp.Usuario'
@@ -108,7 +130,8 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
-STATIC_ROOT = BASE_DIR / 'staticfiles'  # destino de collectstatic (D33-C07)
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+REPORTES_DIR = BASE_DIR / 'reportes'  # Excel generados (fuera de Git)  # destino de collectstatic (D33-C07)
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -134,15 +157,35 @@ SESSION_SAVE_EVERY_REQUEST = True     # ...contados desde el ultimo uso
 LOGIN_URL = 'ingresar'
 
 # Passkeys / WebAuthn (B-06). El navegador solo acepta passkeys en HTTPS o en
-# http://localhost (no en 127.0.0.1). Para el telefono: dominio HTTPS (B-16).
-WEBAUTHN_RP_ID = os.getenv('WEBAUTHN_RP_ID', 'localhost')
+# http://localhost (no en 127.0.0.1).
 WEBAUTHN_RP_NOMBRE = 'HoraSalud CESFAM'
-WEBAUTHN_ORIGENES = [o.strip() for o in os.getenv(
-    'WEBAUTHN_ORIGENES', 'http://localhost:8000').split(',') if o.strip()]
-CSRF_TRUSTED_ORIGINS = [o for o in WEBAUTHN_ORIGENES if o.startswith('https://')]
+WEBAUTHN_RP_IDS = ['localhost']
+WEBAUTHN_ORIGENES = ['http://localhost:8000']
 
-# Ingreso solo con RUT + huella SIMULADA. Solo para el prototipo local:
-# se apaga junto con DEBUG y se reemplaza por passkeys en B-06.
+# B-16: dominio HTTPS del tunel de VS Code (Port Forwarding / Dev Tunnels) para
+# usar la huella del telefono. Ej.: HORASALUD_DOMINIO_PUBLICO=abc123-8000.brs.devtunnels.ms
+HORASALUD_DOMINIO_PUBLICO = os.getenv('HORASALUD_DOMINIO_PUBLICO', '').strip().lower()
+if HORASALUD_DOMINIO_PUBLICO:
+    WEBAUTHN_RP_IDS.append(HORASALUD_DOMINIO_PUBLICO)
+    WEBAUTHN_ORIGENES.append(f'https://{HORASALUD_DOMINIO_PUBLICO}')
+    ALLOWED_HOSTS.append(HORASALUD_DOMINIO_PUBLICO)
+    # El tunel de VS Code reescribe la cabecera Origin a http://localhost:8000.
+    # El token CSRF de cada formulario se sigue exigiendo igual (OWASP A01).
+    CSRF_TRUSTED_ORIGINS = [f'https://{HORASALUD_DOMINIO_PUBLICO}', 'http://localhost:8000']
+    # El tunel recibe HTTPS y lo entrega por HTTP al notebook. Estas cabeceras avisan
+    # que la conexion original era segura y con que dominio llego el celular.
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    USE_X_FORWARDED_HOST = True
+
+# B-07: clave para cifrar datos sensibles en la base (telefono, motivos).
+# Generar con: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+# Sin ella, solo en desarrollo, se deriva de SECRET_KEY. Si se pierde, esos datos no se pueden leer.
+HORASALUD_CLAVE_CIFRADO = os.getenv('HORASALUD_CLAVE_CIFRADO', '')
+if not HORASALUD_CLAVE_CIFRADO and not DEBUG:
+    raise RuntimeError('Falta HORASALUD_CLAVE_CIFRADO en el archivo .env (ver .env.example).')
+
+# Ingreso sin huella (modo demostracion). Solo con DEBUG y SOLO desde
+# localhost: nunca desde el dominio publico del tunel (ver autenticacionApp.passkeys).
 HORASALUD_INGRESO_DEMO = DEBUG and os.getenv('HORASALUD_INGRESO_DEMO', 'True') == 'True'
 X_FRAME_OPTIONS = 'DENY'
 SECURE_CONTENT_TYPE_NOSNIFF = True

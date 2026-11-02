@@ -15,6 +15,8 @@ from .models import BloqueHorario, Especialidad, Hora
 
 
 class ReservaTests(TestCase):
+    databases = {'default', 'fonasa'}  # tambien consulta el padron FONASA simulado
+
     def setUp(self):
         call_command('cargar_datos_demo', stdout=StringIO())
         # Dos pacientes sin horas para partir limpio

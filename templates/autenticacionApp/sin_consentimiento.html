@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}Sin consentimiento{% endblock %}
+
+{% block content %}
+<div class="angosto text-center">
+  <span class="icono-caja azul mx-auto mb-3">{% include 'componentes/icono.html' with n='escudo' %}</span>
+  {% if retirado %}
+    <h1 class="h2 mb-2">Retiraste tu consentimiento</h1>
+    <p class="texto-suave">Desactivamos tu ingreso con huella y cerramos tu sesión. Quedó registrado con fecha y hora.</p>
+  {% else %}
+    <h1 class="h2 mb-2">Está bien, respetamos tu decisión</h1>
+    <p class="texto-suave">No activamos la aplicación. Quedó registrado que no aceptaste.</p>
+  {% endif %}
+  <div class="tarjeta text-start mt-3">
+    <strong>Puedes seguir atendiéndote</strong>
+    <p class="texto-suave mb-0">Pide tus horas en la ventanilla del SOME del CESFAM. Si cambias de opinión, allí te entregan un código nuevo para activar la aplicación.</p>
+  </div>
+  <a href="{% url 'inicio' %}" class="btn btn-verde btn-lg w-100 mt-3">Volver al inicio</a>
+</div>
+{% endblock %}

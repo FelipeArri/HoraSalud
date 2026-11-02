@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import CodigoEnrolamiento, CredencialPasskey, Paciente, Profesional, Sector, Usuario
+from .models import CodigoEnrolamiento, Consentimiento, CredencialPasskey, SolicitudDerechos, Paciente, Profesional, Sector, Usuario
 
 
 @admin.register(Usuario)
@@ -51,3 +51,19 @@ class CodigoEnrolamientoAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         return False
+
+
+@admin.register(Consentimiento)
+class ConsentimientoAdmin(admin.ModelAdmin):
+    list_display = ('usuario', 'version', 'aceptado', 'fecha', 'retirado_en')
+    list_filter = ('version', 'aceptado')
+    readonly_fields = ('usuario', 'version', 'aceptado', 'fecha', 'retirado_en')
+
+    def has_add_permission(self, request):
+        return False  # solo lo registra la persona desde la app
+
+
+@admin.register(SolicitudDerechos)
+class SolicitudDerechosAdmin(admin.ModelAdmin):
+    list_display = ('usuario', 'tipo', 'estado', 'creada_en', 'resuelta_por')
+    list_filter = ('tipo', 'estado')

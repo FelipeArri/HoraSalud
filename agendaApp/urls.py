@@ -12,5 +12,6 @@ urlpatterns = [
     path('mis-horas/<uuid:hora_id>/cancelar/', views.cancelar, name='cancelar_hora'),
     path('mis-horas/<uuid:hora_id>/confirmar/', views.confirmar_asistencia, name='confirmar_asistencia'),
     path('some/', views.some_nomina, name='some_nomina'),
+    path('some/no-vigentes/', views.some_no_vigentes, name='some_no_vigentes'),
     path('some/hora/<uuid:hora_id>/<str:accion>/', views.some_accion, name='some_accion'),
 ]

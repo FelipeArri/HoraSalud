@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}Pacientes no vigentes{% endblock %}
+{% block ancho_alertas %}medio{% endblock %}
+
+{% block content %}
+<div class="medio">
+  <a class="volver" href="{% url 'some_nomina' %}">{% include 'componentes/icono.html' with n='atras' %}Volver a la nómina</a>
+  <div class="etiqueta-seccion">Panel SOME</div>
+  <h1 class="mb-1">Pacientes no vigentes</h1>
+  <p class="texto-suave mb-3">Dejaron FONASA (ISAPRE, DIPRECA, CAPREDENA o sin previsión): ya no pertenecen al consultorio y sus horas futuras se cancelaron (RN-16). Si la persona vuelve a FONASA, consulta de nuevo para reactivarla.</p>
+
+  {% for fila in filas %}{% with p=fila.paciente %}
+    <div class="tarjeta d-flex justify-content-between align-items-center flex-wrap gap-3">
+      <div>
+        <strong class="d-block">{{ p.usuario.get_full_name }}</strong>
+        <span class="texto-suave small">{{ p.usuario.rut }} · {{ p.sector.nombre|default:'—' }} · última consulta {{ p.prevision_consultada_en|date:"d-m-Y H:i"|default:'—' }}</span>
+        <div class="mt-1">
+          <span class="estado estado-cancelada">{{ p.get_prevision_display }}</span>
+          <span class="texto-suave small ms-1">{{ fila.canceladas }} hora(s) cancelada(s)</span>
+        </div>
+      </div>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="paciente" value="{{ p.pk }}">
+        <button class="btn btn-verde">Consultar FONASA y reactivar</button>
+      </form>
+    </div>
+  {% endwith %}{% empty %}
+    <div class="tarjeta text-center texto-suave">No hay pacientes no vigentes.</div>
+  {% endfor %}
+</div>
+{% endblock %}

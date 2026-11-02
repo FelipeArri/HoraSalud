@@ -18,7 +18,8 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from agendaApp.models import Agenda, BloqueHorario, Especialidad, Hora
-from autenticacionApp.models import Paciente, Profesional, Sector
+from autenticacionApp.models import Consentimiento, Paciente, Profesional, Sector
+from autenticacionApp.privacidad import VERSION_POLITICA
 from autenticacionApp.validators import calcular_dv
 from listaEsperaApp.models import EsperaPaciente
 
@@ -60,6 +61,8 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('--limpiar', action='store_true', help='Borra los datos demo antes de cargar.')
+        parser.add_argument('--sin-pacientes', action='store_true',
+                            help='Carga solo funcionarios, profesionales y agendas (sin pacientes ni tutores).')
 
     @transaction.atomic
     def handle(self, *args, **opciones):
@@ -94,8 +97,14 @@ class Command(BaseCommand):
                 'sector': sectores[i % 3],
                 'ficha_clinica_id': f'FC-{1000 + i}',
                 'tutor': tutores[i] if i < len(tutores) else None,  # RF-03: dos pacientes con tutor
+                'tramo': 'ABCD'[i % 4],  # igual que el FONASA simulado (B-18)
             })
             pacientes.append(paciente)
+
+        # B-07: los usuarios demo simulan personas ya enroladas que aceptaron la politica
+        for persona in tutores + [p.usuario for p in pacientes]:
+            Consentimiento.objects.get_or_create(usuario=persona, version=VERSION_POLITICA,
+                                                 defaults={'aceptado': True})
 
         bloques = []
         for dia in proximos_dias_habiles(5):
@@ -123,6 +132,11 @@ class Command(BaseCommand):
         for orden, paciente in enumerate(pacientes[-3:], start=1):
             EsperaPaciente.objects.get_or_create(especialidad=especialidades[0], paciente=paciente,
                                                  defaults={'orden': orden})
+
+        if opciones['sin_pacientes']:
+            # Empezar limpio: los pacientes entran solo por el flujo real (SOME + padron FONASA)
+            from agendaApp.management.commands.vaciar_pacientes import vaciar
+            vaciar()
 
         self.stdout.write(self.style.SUCCESS(
             f'Datos demo listos: {Usuario.objects.filter(username__startswith=PREFIJO).count()} usuarios, '
