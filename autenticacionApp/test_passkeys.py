@@ -21,6 +21,8 @@ DOMINIO = 'abc123-8000.brs.devtunnels.ms'
                    ALLOWED_HOSTS=['localhost', DOMINIO], HORASALUD_INGRESO_DEMO=False,
                    USE_X_FORWARDED_HOST=True)
 class PasskeyTests(TestCase):
+    databases = {'default', 'fonasa'}  # el panel SOME consulta el padron FONASA simulado
+
     def setUp(self):
         self.client.defaults['HTTP_HOST'] = 'localhost'
         call_command('cargar_datos_demo', stdout=StringIO())

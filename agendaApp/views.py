@@ -13,25 +13,40 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from autenticacionApp.models import Paciente
 from autenticacionApp.sesion import requiere_paciente, requiere_some
 
-from . import servicios
+from . import prevision, servicios
 from .estados_hora import TransicionInvalida
 from .models import Agenda, BloqueHorario, Especialidad, Hora
 
 
 # ---------- Paciente / tutor ----------
 
+def requiere_vigente(vista):
+    """B-19 · RN-16: un paciente No vigente no puede pedir horas por la app."""
+    def envoltura(request, *args, **kwargs):
+        if request.paciente.estado_inscripcion != Paciente.Estado.VIGENTE:
+            messages.error(request, prevision.mensaje_no_vigente(request.paciente))
+            return redirect('mi_inicio')
+        return vista(request, *args, **kwargs)
+    envoltura.__name__ = vista.__name__
+    return envoltura
+
+
 @requiere_paciente
 def mi_inicio(request):
     vigentes = servicios.horas_vigentes(request.paciente)
+    no_vigente = request.paciente.estado_inscripcion != Paciente.Estado.VIGENTE
     return render(request, 'agendaApp/mi_inicio.html', {
+        'aviso_no_vigente': prevision.mensaje_no_vigente(request.paciente) if no_vigente else '',
         'proxima': vigentes.first(),
         'cantidad_vigentes': vigentes.count(),
     })
 
 
 @requiere_paciente
+@requiere_vigente
 def pedir_especialidad(request):
     """Paso 1 de 3: elegir especialidad (tabs Medicina general / Programas)."""
     # RN-01: si ya tiene una hora vigente en esa especialidad, se avisa desde el paso 1
@@ -49,6 +64,7 @@ def pedir_especialidad(request):
 
 
 @requiere_paciente
+@requiere_vigente
 def pedir_bloque(request, especialidad_id):
     """Paso 2 de 3: elegir dia y hora."""
     especialidad = get_object_or_404(Especialidad, pk=especialidad_id)
@@ -70,6 +86,7 @@ def pedir_bloque(request, especialidad_id):
 
 
 @requiere_paciente
+@requiere_vigente
 def pedir_confirmar(request, bloque_id):
     """Paso 3 de 3: resumen y confirmacion."""
     bloque = get_object_or_404(BloqueHorario.objects.select_related(
@@ -157,7 +174,9 @@ def some_nomina(request):
         'atendidas': sum(1 for f in filas if f['hora'].estado == Hora.Estado.ATENDIDA),
         'no_show': sum(1 for f in filas if f['hora'].estado == Hora.Estado.NO_SHOW),
     }
+    no_vigentes = Paciente.objects.filter(estado_inscripcion=Paciente.Estado.NO_VIGENTE).count()
     return render(request, 'agendaApp/some_nomina.html', {
+        'no_vigentes': no_vigentes,
         'dia': dia, 'fechas': fechas, 'filas': filas, 'resumen': resumen, 'hoy': timezone.localdate()})
 
 
@@ -174,3 +193,23 @@ def some_accion(request, hora_id, accion):
     except TransicionInvalida as error:
         messages.error(request, str(error))
     return redirect(f"{reverse('some_nomina')}?dia={hora.bloque.agenda.fecha.isoformat()}")
+
+
+@requiere_some
+def some_no_vigentes(request):
+    """B-19: pacientes que dejaron FONASA. El SOME puede reactivarlos si vuelven a FONASA."""
+    if request.method == 'POST':
+        paciente = get_object_or_404(Paciente, pk=request.POST.get('paciente'),
+                                     estado_inscripcion=Paciente.Estado.NO_VIGENTE)
+        if prevision.reactivar(paciente):
+            messages.success(request, f'{paciente.usuario.get_full_name()} volvió a FONASA: quedó vigente y ya puede pedir horas.')
+        else:
+            messages.error(request, f'{paciente.usuario.get_full_name()} sigue con {paciente.get_prevision_display()}: no se puede reactivar.')
+        return redirect('some_no_vigentes')
+    pacientes = (Paciente.objects.filter(estado_inscripcion=Paciente.Estado.NO_VIGENTE)
+                 .select_related('usuario', 'sector').order_by('usuario__last_name'))
+    # El motivo va cifrado (no se puede filtrar); las cancelaciones por RN-16 son las que generaron un aviso
+    from notificacionesApp.models import RegistroNotificacion
+    filas = [{'paciente': p, 'canceladas': RegistroNotificacion.objects.filter(hora__paciente=p).count()}
+             for p in pacientes]
+    return render(request, 'agendaApp/some_no_vigentes.html', {'filas': filas})

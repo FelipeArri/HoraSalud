@@ -61,6 +61,8 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('--limpiar', action='store_true', help='Borra los datos demo antes de cargar.')
+        parser.add_argument('--sin-pacientes', action='store_true',
+                            help='Carga solo funcionarios, profesionales y agendas (sin pacientes ni tutores).')
 
     @transaction.atomic
     def handle(self, *args, **opciones):
@@ -130,6 +132,11 @@ class Command(BaseCommand):
         for orden, paciente in enumerate(pacientes[-3:], start=1):
             EsperaPaciente.objects.get_or_create(especialidad=especialidades[0], paciente=paciente,
                                                  defaults={'orden': orden})
+
+        if opciones['sin_pacientes']:
+            # Empezar limpio: los pacientes entran solo por el flujo real (SOME + padron FONASA)
+            from agendaApp.management.commands.vaciar_pacientes import vaciar
+            vaciar()
 
         self.stdout.write(self.style.SUCCESS(
             f'Datos demo listos: {Usuario.objects.filter(username__startswith=PREFIJO).count()} usuarios, '

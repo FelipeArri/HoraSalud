@@ -14,6 +14,13 @@
     </div>
   </div>
 
+  {% if aviso_no_vigente %}
+  <div class="alert alert-warning d-flex gap-2 align-items-start" role="alert">
+    {% include 'componentes/icono.html' with n='escudo' %}
+    <div><strong>No puedes pedir horas por la aplicación.</strong><br>{{ aviso_no_vigente }}</div>
+  </div>
+  {% endif %}
+
   <div class="etiqueta-seccion mb-2">Tu próxima hora</div>
   {% if proxima %}
     <div class="proxima mb-2">
@@ -37,6 +44,7 @@
 
   <div class="etiqueta-seccion mb-2">¿Qué necesitas hacer?</div>
   <div class="row g-3">
+    {% if not aviso_no_vigente %}
     <div class="col-12 col-md-6">
       <a class="tarjeta-accion h-100" href="{% url 'pedir_especialidad' %}">
         <span class="icono-caja">{% include 'componentes/icono.html' with n='calendario' %}</span>
@@ -44,6 +52,7 @@
         <span class="flecha">{% include 'componentes/icono.html' with n='flecha' %}</span>
       </a>
     </div>
+    {% endif %}
     <div class="col-12 col-md-6">
       <a class="tarjeta-accion h-100" href="{% url 'mis_horas' %}">
         <span class="icono-caja azul">{% include 'componentes/icono.html' with n='lista' %}</span>

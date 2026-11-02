@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'listaEsperaApp',     # RF-06
     'notificacionesApp',  # Factory Method + Strategy
     'pantallaApp',        # Pantalla de la sala de espera
+    'fonasaSimuladoApp',  # FONASA simulado: sistema EXTERNO, en su propia base
 ]
 
 MIDDLEWARE = [
@@ -74,7 +75,11 @@ if os.getenv('DB_ENGINE') == 'sqlite':
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db_pruebas.sqlite3',
-        }
+        },
+        'fonasa': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db_pruebas_fonasa.sqlite3',
+        },
     }
 else:
     DATABASES = {
@@ -89,8 +94,24 @@ else:
                 'init_command': "SET sql_mode='STRICT_ALL_TABLES'",
                 'charset': 'utf8mb4',
             },
-        }
+        },
+        # FONASA simulado: sistema EXTERNO en su propia base (mismo MySQL de XAMPP)
+        'fonasa': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': os.getenv('FONASA_DB_NAME', 'fonasa_simulado'),
+            'USER': os.getenv('DB_USER'),
+            'PASSWORD': os.getenv('DB_PASSWORD'),
+            'HOST': os.getenv('DB_HOST', '127.0.0.1'),
+            'PORT': os.getenv('DB_PORT', '3306'),
+            'OPTIONS': {
+                'init_command': "SET sql_mode='STRICT_ALL_TABLES'",
+                'charset': 'utf8mb4',
+            },
+        },
     }
+
+# Todo lo de fonasaSimuladoApp va a la base 'fonasa'; lo demas a horasalud_db
+DATABASE_ROUTERS = ['fonasaSimuladoApp.router.RouterFonasa']
 
 # Usuario propio con RUT y tipo de usuario (RF-01). Debe definirse antes del primer migrate.
 AUTH_USER_MODEL = 'autenticacionApp.Usuario'
@@ -109,7 +130,8 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
-STATIC_ROOT = BASE_DIR / 'staticfiles'  # destino de collectstatic (D33-C07)
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+REPORTES_DIR = BASE_DIR / 'reportes'  # Excel generados (fuera de Git)  # destino de collectstatic (D33-C07)
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

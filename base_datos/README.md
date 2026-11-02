@@ -34,6 +34,21 @@ con datos (cifrados con tu clave), ejecuta después de importar:
 python manage.py cargar_datos_demo --limpiar
 ```
 
+## FONASA simulado (segunda base de datos)
+
+`01_crear_base_y_usuario.sql` también crea la base **`fonasa_simulado`**, que
+representa a FONASA: un sistema **externo** que HoraSalud solo consulta (patrón
+Adapter). Sus tablas y sus **25 personas ficticias** se crean con:
+
+```powershell
+python manage.py migrate --database=fonasa
+```
+
+- **Agregar o editar personas de prueba:** `/admin/` → *Padrón FONASA simulado*.
+- **Ver el listado en Excel:** `python manage.py exportar_padron` → `reportes/padron_fonasa_simulado.xlsx`.
+- **Ver quién está inscrito en HoraSalud:** `python manage.py exportar_inscritos` → `reportes/inscritos_FECHA.xlsx`.
+- **Empezar sin pacientes:** `python manage.py vaciar_pacientes --confirmar`.
+
 ## Las fechas se desactualizan
 
 Las agendas corresponden a los días hábiles siguientes a la fecha en que se
