@@ -27,6 +27,7 @@
             <a href="{% url 'some_nomina' %}" class="d-none d-md-inline-flex {% if ruta == 'some_nomina' %}activo{% endif %}">Nómina</a>
             <a href="{% url 'some_enrolar' %}" class="d-none d-md-inline-flex {% if ruta == 'some_enrolar' %}activo{% endif %}">Activar huella</a>
             <a href="{% url 'agendas_semana' %}" class="d-none d-md-inline-flex {% if ruta|slice:':7' == 'agendas' %}activo{% endif %}">Agendas</a>
+            <a href="{% url 'some_tutores' %}" class="d-none d-md-inline-flex {% if ruta == 'some_tutores' %}activo{% endif %}">Tutores</a>
             <a href="{% url 'some_solicitudes' %}" class="d-none d-md-inline-flex {% if ruta == 'some_solicitudes' %}activo{% endif %}">Solicitudes</a>
             <a href="{% url 'sala_espera' %}" class="d-none d-md-inline-flex" target="_blank" rel="noopener">Pantalla sala</a>
           {% endif %}

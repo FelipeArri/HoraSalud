@@ -201,6 +201,9 @@ class RegistroAuditoria(models.Model):
         ATENDIDA = 'atendida', 'Marcó hora atendida'
         # DEF-08 · ingreso de pacientes y tutores
         INGRESO_BLOQUEADO = 'ingreso_bloqueado', 'Ingreso bloqueado por intentos'
+        # B-10 · vínculo de tutor (RF-03)
+        TUTOR_AUTORIZADO = 'tutor_autorizado', 'Autorizó un tutor'
+        TUTOR_REVOCADO = 'tutor_revocado', 'Quitó un tutor'
 
     fecha = models.DateTimeField(auto_now_add=True)
     actor = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')

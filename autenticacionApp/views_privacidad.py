@@ -15,12 +15,14 @@ from django.contrib import messages
 from django.contrib.auth import logout
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from . import privacidad
+from . import inscripcion, privacidad, vinculo_tutor
+from .forms import IngresoRutForm, TutorForm
 from .models import CodigoEnrolamiento, SolicitudDerechos, Usuario
-from .sesion import requiere_some
+from .sesion import pacientes_a_cargo, requiere_some
 
 TIPOS_PERSONA = [Usuario.Tipo.PACIENTE, Usuario.Tipo.TUTOR]
 CLAVE_ENROLANDO = 'enrolamiento_codigo_id'  # la misma que usa views.enrolar
@@ -90,17 +92,78 @@ def requiere_persona(vista):
     return envoltura
 
 
-@requiere_persona
-def mis_datos(request):
+def _mis_datos(request, tutor_form=None):
     usuario = request.user
+    paciente = getattr(usuario, 'paciente', None)
+    if paciente and not paciente.tutor_id and tutor_form is None:
+        tutor_form = TutorForm()
     return render(request, 'autenticacionApp/mis_datos.html', {
         **_contexto_politica(),
-        'paciente': getattr(usuario, 'paciente', None),
+        'paciente': paciente,
+        'tutor_form': tutor_form,
+        'a_cargo': pacientes_a_cargo(usuario) if usuario.tipo_usuario == Usuario.Tipo.TUTOR else None,
         'consentimiento': usuario.consentimientos.filter(aceptado=True).first(),
         'dispositivos': usuario.passkeys.order_by('-creada_en'),
         'solicitudes': usuario.solicitudes_derechos.order_by('-creada_en')[:10],
         'tipos_solicitud': SolicitudDerechos.Tipo.choices,
     })
+
+
+@requiere_persona
+def mis_datos(request):
+    return _mis_datos(request)
+
+
+# ---------- B-10 · Mi tutor (RF-03) ----------
+
+def _paciente_propio(request):
+    """Solo el paciente maneja su tutor (el tutor no puede autorizarse ni quitarse a sí mismo aquí)."""
+    if request.user.tipo_usuario != Usuario.Tipo.PACIENTE:
+        return None
+    return getattr(request.user, 'paciente', None)
+
+
+@require_POST
+@requiere_persona
+def autorizar_tutor(request):
+    paciente = _paciente_propio(request)
+    if paciente is None:
+        messages.warning(request, 'Solo el paciente puede autorizar a su tutor.')
+        return redirect('mis_datos')
+    if paciente.tutor_id:  # la pantalla ya no muestra el formulario: se avisa arriba
+        messages.error(request, 'Ya tienes un tutor. Quítalo primero si quieres cambiarlo.')
+        return redirect('mis_datos')
+    form = TutorForm(request.POST)
+    if not form.is_valid():
+        return _mis_datos(request, tutor_form=form)
+    try:
+        tutor, nuevo = vinculo_tutor.autorizar(paciente, form.cleaned_data['rut'], form.cleaned_data['nombres'],
+                                               form.cleaned_data['apellidos'], request=request)
+    except vinculo_tutor.VinculoError as error:
+        form.add_error(None, str(error))
+        return _mis_datos(request, tutor_form=form)
+    if nuevo or not tutor.passkeys.exists():
+        messages.success(request, f'Autorizaste a {tutor.get_full_name()}. Para entrar, debe activar su huella '
+                                  'en el SOME del CESFAM con su cédula de identidad.')
+    else:
+        messages.success(request, f'Autorizaste a {tutor.get_full_name()}. Ya puede pedir horas por ti.')
+    return redirect('mis_datos')
+
+
+@require_POST
+@requiere_persona
+def quitar_tutor(request):
+    paciente = _paciente_propio(request)
+    if paciente is None:
+        messages.warning(request, 'Solo el paciente puede quitar a su tutor.')
+        return redirect('mis_datos')
+    try:
+        tutor = vinculo_tutor.revocar(paciente, request=request)
+    except vinculo_tutor.VinculoError as error:
+        messages.error(request, str(error))
+    else:
+        messages.success(request, f'{tutor.get_full_name()} ya no puede pedir ni cancelar horas por ti.')
+    return redirect('mis_datos')
 
 
 @requiere_persona
@@ -147,6 +210,65 @@ def retirar_consentimiento(request):
     usuario.passkeys.all().delete()
     logout(request)
     return render(request, 'autenticacionApp/sin_consentimiento.html', {'retirado': True})
+
+
+# ---------- SOME: vínculos de tutor (B-10 · RF-03) ----------
+
+TEXTO_AUTORIZACION_SOME = ('El paciente, o su representante legal, está presente y autoriza a esta persona '
+                           'a pedir y cancelar horas por él.')
+
+
+def _consultar_paciente_some(rut):
+    """Devuelve (consulta, motivo_rechazo). Siempre vuelve a consultar el sistema clínico y FONASA (B-18)."""
+    otro = Usuario.objects.filter(rut=rut).exclude(tipo_usuario=Usuario.Tipo.PACIENTE).first()
+    if otro:
+        return None, 'Ese RUT es de un tutor o de un funcionario, no de un paciente.'
+    consulta = inscripcion.consultar(rut)
+    if not consulta.puede_recibir_codigo:
+        return consulta, consulta.motivo_rechazo
+    return consulta, ''
+
+
+@requiere_some
+def some_tutores(request):
+    """El SOME autoriza o quita el tutor de un paciente que está en ventanilla."""
+    rut_form = IngresoRutForm(request.POST or request.GET or None)
+    tutor_form = TutorForm(request.POST if request.POST.get('accion') == 'autorizar' else None, prefix='tutor')
+    tutor_form.fields['confirmo'].label = TEXTO_AUTORIZACION_SOME
+    tutor_form.fields['confirmo'].error_messages['required'] = 'Confirma que el paciente o su representante lo autoriza.'
+    consulta, rechazo, paciente = None, '', None
+
+    if rut_form.is_bound and rut_form.is_valid():
+        consulta, rechazo = _consultar_paciente_some(rut_form.cleaned_data['rut'])
+        if consulta and consulta.usuario:
+            paciente = getattr(consulta.usuario, 'paciente', None)
+
+        accion = request.POST.get('accion')
+        if request.method == 'POST' and not rechazo:
+            try:
+                if accion == 'autorizar' and tutor_form.is_valid():
+                    paciente = inscripcion.registrar_paciente(consulta).paciente  # menor sin cuenta: se crea aquí
+                    tutor, nuevo = vinculo_tutor.autorizar(
+                        paciente, tutor_form.cleaned_data['rut'], tutor_form.cleaned_data['nombres'],
+                        tutor_form.cleaned_data['apellidos'], request=request, por_some=True)
+                    aviso = ' Para entrar debe activar su huella aquí mismo, en "Activar huella".' \
+                        if nuevo or not tutor.passkeys.exists() else ''
+                    messages.success(request, f'{tutor.get_full_name()} quedó como tutor de '
+                                              f'{paciente.usuario.get_full_name()}.{aviso}')
+                    return redirect(f"{reverse('some_tutores')}?rut={paciente.usuario.rut}")
+                if accion == 'quitar' and paciente:
+                    tutor = vinculo_tutor.revocar(paciente, request=request, por_some=True)
+                    messages.success(request, f'{tutor.get_full_name()} ya no es tutor de '
+                                              f'{paciente.usuario.get_full_name()}.')
+                    return redirect(f"{reverse('some_tutores')}?rut={paciente.usuario.rut}")
+            except vinculo_tutor.VinculoError as error:
+                tutor_form.add_error(None, str(error))
+            if paciente:
+                paciente.refresh_from_db()
+
+    return render(request, 'autenticacionApp/some_tutores.html', {
+        'rut_form': rut_form, 'tutor_form': tutor_form, 'consulta': consulta, 'rechazo': rechazo,
+        'paciente': paciente})
 
 
 # ---------- SOME: solicitudes de derechos ----------

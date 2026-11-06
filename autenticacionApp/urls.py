@@ -34,5 +34,8 @@ urlpatterns = [
     path('mis-datos/dispositivo/<int:passkey_id>/borrar/', privacidad.borrar_dispositivo, name='borrar_dispositivo'),
     path('mis-datos/solicitud/', privacidad.solicitar_derecho, name='solicitar_derecho'),
     path('mis-datos/retirar/', privacidad.retirar_consentimiento, name='retirar_consentimiento'),
+    path('mis-datos/tutor/autorizar/', privacidad.autorizar_tutor, name='autorizar_tutor'),
+    path('mis-datos/tutor/quitar/', privacidad.quitar_tutor, name='quitar_tutor'),
+    path('some/tutores/', privacidad.some_tutores, name='some_tutores'),
     path('some/solicitudes/', privacidad.some_solicitudes, name='some_solicitudes'),
 ]

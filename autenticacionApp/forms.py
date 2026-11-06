@@ -35,6 +35,24 @@ class IngresoPersonalForm(IngresoRutForm):
         'autocomplete': 'current-password', 'class': 'form-control form-control-lg'}))
 
 
+class TutorForm(IngresoRutForm):
+    """B-10 · RF-03: RUT y nombre de la persona que será tutor."""
+
+    nombres = forms.CharField(label='Nombres', max_length=150, required=False,
+                              widget=forms.TextInput(attrs={'class': 'form-control', 'autocomplete': 'off'}))
+    apellidos = forms.CharField(label='Apellidos', max_length=150, required=False,
+                                widget=forms.TextInput(attrs={'class': 'form-control', 'autocomplete': 'off'}))
+    confirmo = forms.BooleanField(
+        label='Entiendo que esta persona podrá pedir y cancelar horas por mí.',
+        error_messages={'required': 'Confirma que autorizas a esta persona.'})
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['rut'].label = 'RUT del tutor'
+        self.fields['rut'].widget.attrs['autocomplete'] = 'off'
+        self.fields['rut'].widget.attrs.pop('autofocus', None)
+
+
 class FuncionarioForm(IngresoRutForm):
     """B-20: el Administrador CESFAM agrega a un funcionario (y confirma con SU clave)."""
 
