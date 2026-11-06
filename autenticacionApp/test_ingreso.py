@@ -1,6 +1,7 @@
 """Pruebas del ingreso (RF-01, RF-03, RN-07)."""
 from io import StringIO
 
+from django.core.cache import cache
 from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -11,6 +12,7 @@ from .models import Paciente, Usuario
 @override_settings(HORASALUD_INGRESO_DEMO=True)
 class IngresoTests(TestCase):
     def setUp(self):
+        cache.clear()  # DEF-08: los contadores de intentos viven en la caché
         self.client.defaults['HTTP_HOST'] = 'localhost'  # el modo demo solo existe en el notebook
         call_command('cargar_datos_demo', stdout=StringIO())
         self.paciente = Paciente.objects.filter(tutor__isnull=True).select_related('usuario').first()

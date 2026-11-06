@@ -7,8 +7,11 @@ en un solo lugar y se pueden probar sin navegador.
 from datetime import datetime, timedelta
 
 from django.db import IntegrityError, transaction
+from django.db.models import Q
 from django.utils import timezone
 
+from autenticacionApp.models import RegistroAuditoria
+from autenticacionApp.personal import auditar
 from proyectoHoraSalud.configuracion_sistema import ConfiguracionSistema
 
 from .estados_hora import TransicionInvalida
@@ -37,10 +40,28 @@ def _limite_reserva():
     return timezone.localdate() + timedelta(days=ConfiguracionSistema().horizonte_maximo_reserva_dias)
 
 
-def bloques_reservables(especialidad):
-    """Bloques libres, futuros y dentro del horizonte de reserva."""
+def filtro_sector(paciente):
+    """DEF-06 (RF-02): el paciente ve las agendas de su sector y las de los profesionales
+    sin sector, que atienden a todos (por ejemplo, los programas)."""
+    if paciente is None:  # uso interno (SOME, pruebas): sin filtro
+        return Q()
+    todos_los_sectores = Q(agenda__profesional__sector__isnull=True)
+    if paciente.sector_id is None:
+        return todos_los_sectores
+    return todos_los_sectores | Q(agenda__profesional__sector_id=paciente.sector_id)
+
+
+def _detalle_hora(hora):
+    # Sin el motivo ni datos clínicos: solo qué hora se tocó
+    bloque = hora.bloque
+    return f'{bloque.agenda.especialidad} · {bloque.agenda.fecha:%d-%m-%Y} {bloque.hora_inicio:%H:%M}'
+
+
+def bloques_reservables(especialidad, paciente=None):
+    """Bloques libres, futuros, dentro del horizonte de reserva y del sector del paciente."""
     ahora = timezone.localtime()
     bloques = (BloqueHorario.objects
+               .filter(filtro_sector(paciente))
                .filter(estado=BloqueHorario.Estado.DISPONIBLE, agenda__especialidad=especialidad,
                        agenda__fecha__gte=ahora.date(), agenda__fecha__lte=_limite_reserva(),
                        tipo_cupo=BloqueHorario.TipoCupo.PROGRAMADO)  # B-21: ventanilla no se ve en la app
@@ -54,7 +75,7 @@ def horas_vigentes(paciente):
             .select_related('bloque__agenda__especialidad', 'bloque__agenda__profesional__usuario'))
 
 
-def reservar_hora(paciente, bloque_id):
+def reservar_hora(paciente, bloque_id, request=None):
     """RF-02. Devuelve la Hora creada o lanza ReglaNegocioError."""
     from . import prevision  # B-19: se importa aqui para evitar una importacion circular
     prevision.revalidar(paciente)  # consulta FONASA si la ultima consulta tiene mas de 30 dias
@@ -66,6 +87,9 @@ def reservar_hora(paciente, bloque_id):
                   .select_related('agenda__especialidad').get(pk=bloque_id))
         if bloque.tipo_cupo != BloqueHorario.TipoCupo.PROGRAMADO:
             raise ReglaNegocioError('Ese horario se entrega solo en el SOME del CESFAM.')  # B-21
+        if not BloqueHorario.objects.filter(pk=bloque.pk).filter(filtro_sector(paciente)).exists():
+            raise ReglaNegocioError('Ese horario es de otro sector del CESFAM. '
+                                    'Elige uno de tu sector, por favor.')  # DEF-06
         if bloque.estado != BloqueHorario.Estado.DISPONIBLE:
             raise ReglaNegocioError('Ese horario acaba de ser tomado por otra persona. Elige otro, por favor.')
         if inicio_bloque(bloque) <= timezone.localtime():
@@ -84,10 +108,12 @@ def reservar_hora(paciente, bloque_id):
             raise ReglaNegocioError('Ese horario acaba de ser tomado por otra persona. Elige otro, por favor.')
     from .gestion_agendas import resolver_indicacion_al_reservar
     resolver_indicacion_al_reservar(hora)  # P-10: ya pidió su control
+    auditar(request, RegistroAuditoria.Accion.RESERVA, objetivo=paciente.usuario,
+            detalle=_detalle_hora(hora))  # DEF-07 (RN-11)
     return hora
 
 
-def cancelar_hora(hora, motivo, quien='Paciente'):
+def cancelar_hora(hora, motivo, quien='Paciente', request=None):
     """RN-04 (plazo minimo) y RN-05 (motivo obligatorio)."""
     if hora.estado not in ESTADOS_VIGENTES:
         raise ReglaNegocioError('Esta hora ya no se puede cancelar.')
@@ -100,6 +126,8 @@ def cancelar_hora(hora, motivo, quien='Paciente'):
     hora.estado = Hora.Estado.CANCELADA
     hora.motivo_cancelacion = f'{quien}: {motivo.strip()}'[:200]
     hora.save()
+    auditar(request, RegistroAuditoria.Accion.CANCELACION, objetivo=hora.paciente.usuario,
+            detalle=f'{quien} · {_detalle_hora(hora)}')  # DEF-07 (RN-11); el motivo va cifrado, no se copia
     return hora
 
 
@@ -113,11 +141,13 @@ def confirmar_asistencia(hora):
     hora.save()
 
 
-def marcar_atendida(hora):
+def marcar_atendida(hora, request=None):
     if hora.estado not in ESTADOS_VIGENTES:
         raise TransicionInvalida('Esta hora ya fue cerrada.')
     hora.estado = Hora.Estado.ATENDIDA
     hora.save()
+    auditar(request, RegistroAuditoria.Accion.ATENDIDA, objetivo=hora.paciente.usuario,
+            detalle=_detalle_hora(hora))
 
 
 def puede_marcar_no_show(hora):
@@ -125,10 +155,12 @@ def puede_marcar_no_show(hora):
     return hora.estado in ESTADOS_VIGENTES and timezone.localtime() >= inicio_bloque(hora.bloque) + tolerancia
 
 
-def marcar_no_show(hora):
+def marcar_no_show(hora, request=None):
     """RF-05: inasistencia solo despues de la tolerancia (20 min)."""
     if not puede_marcar_no_show(hora):
         raise TransicionInvalida('Aún no se cumple la tolerancia de '
                                  f'{ConfiguracionSistema().tolerancia_no_show_minutos} minutos.')
     hora.estado = Hora.Estado.NO_SHOW
     hora.save()
+    auditar(request, RegistroAuditoria.Accion.NO_SHOW, objetivo=hora.paciente.usuario,
+            detalle=_detalle_hora(hora))  # DEF-07 (RN-11)

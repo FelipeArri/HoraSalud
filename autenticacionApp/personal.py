@@ -119,7 +119,7 @@ def funcionarios():
 
 
 @transaction.atomic
-def crear_funcionario(request, *, rut, nombres, apellidos, tipo, especialidad=None, box='', email=''):
+def crear_funcionario(request, *, rut, nombres, apellidos, tipo, especialidad=None, box='', email='', sector=None):
     """Crea la cuenta con una clave temporal que se entrega en persona. Devuelve (usuario, clave)."""
     if Usuario.objects.filter(rut=rut).exists():
         raise PersonalError('Ese RUT ya tiene una cuenta en HoraSalud.')
@@ -129,7 +129,7 @@ def crear_funcionario(request, *, rut, nombres, apellidos, tipo, especialidad=No
     usuario.set_password(clave)
     usuario.save()
     if tipo == Usuario.Tipo.PROFESIONAL:
-        Profesional.objects.create(usuario=usuario, especialidad=especialidad, box_atencion=box)
+        Profesional.objects.create(usuario=usuario, especialidad=especialidad, box_atencion=box, sector=sector)
     auditar(request, RegistroAuditoria.Accion.ALTA, objetivo=usuario,
             detalle=f'{usuario.get_tipo_usuario_display()}' + (f' · {especialidad}' if especialidad else ''))
     return usuario, clave

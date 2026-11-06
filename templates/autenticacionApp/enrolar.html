@@ -15,6 +15,7 @@
 
     <form method="post" novalidate>
       {% csrf_token %}
+      {% for error in form.non_field_errors %}<div class="alert alert-warning py-2" role="alert">{{ error }}</div>{% endfor %}
       <label for="id_rut" class="form-label fw-semibold">RUT</label>
       <input type="text" name="rut" id="id_rut" value="{{ form.rut.value|default:'' }}"
              class="form-control form-control-lg campo-rut {% if form.rut.errors %}is-invalid{% endif %}"

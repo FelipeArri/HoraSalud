@@ -29,8 +29,8 @@ class PacienteAdmin(admin.ModelAdmin):
 
 @admin.register(Profesional)
 class ProfesionalAdmin(admin.ModelAdmin):
-    list_display = ('usuario', 'especialidad', 'box_atencion')
-    list_filter = ('especialidad',)
+    list_display = ('usuario', 'especialidad', 'sector', 'box_atencion')
+    list_filter = ('especialidad', 'sector')
 
 
 @admin.register(CredencialPasskey)

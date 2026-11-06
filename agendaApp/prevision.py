@@ -21,7 +21,8 @@ from django.db import transaction
 from django.utils import timezone
 
 from autenticacionApp.adapter_inscripcion import PrevisionService, servicios_externos
-from autenticacionApp.models import Paciente
+from autenticacionApp.models import Paciente, RegistroAuditoria
+from autenticacionApp.personal import auditar
 from notificacionesApp.models import RegistroNotificacion
 
 from .models import Hora
@@ -62,6 +63,9 @@ def dejar_no_vigente(paciente, prevision):
         hora.motivo_cancelacion = f'CESFAM: cambio de previsión ({NOMBRES.get(prevision, prevision)})'
         hora.save()  # Hora.save() libera el bloque (DEF-01)
         RegistroNotificacion.objects.create(hora=hora, canal=RegistroNotificacion.Canal.APP)  # aviso RN-13
+        auditar(None, RegistroAuditoria.Accion.CANCELACION, objetivo=paciente.usuario,
+                detalle=f'Sistema (RN-16) · {hora.bloque.agenda.especialidad} · '
+                        f'{hora.bloque.agenda.fecha:%d-%m-%Y} {hora.bloque.hora_inicio:%H:%M}')  # DEF-07
         canceladas += 1
     return canceladas
 

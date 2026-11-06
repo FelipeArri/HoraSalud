@@ -3,6 +3,7 @@ import json
 from datetime import timedelta
 from io import StringIO
 
+from django.core.cache import cache
 from django.core.management import call_command
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
@@ -24,6 +25,7 @@ class PasskeyTests(TestCase):
     databases = {'default', 'fonasa'}  # el panel SOME consulta el padron FONASA simulado
 
     def setUp(self):
+        cache.clear()  # DEF-08: los contadores de intentos viven en la caché
         self.client.defaults['HTTP_HOST'] = 'localhost'
         call_command('cargar_datos_demo', stdout=StringIO())
         self.paciente = Usuario.objects.filter(tipo_usuario=Usuario.Tipo.PACIENTE).order_by('rut').first()
