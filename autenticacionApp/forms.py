@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 
 from agendaApp.models import Especialidad
 
-from .models import Usuario
+from .models import Sector, Usuario
 from .validators import normalizar_rut, validar_rut
 
 
@@ -48,6 +48,9 @@ class FuncionarioForm(IngresoRutForm):
                                           queryset=Especialidad.objects.order_by('nombre'),
                                           empty_label='— (solo para profesionales) —')
     box = forms.CharField(label='Box de atención', max_length=10, required=False)
+    sector = forms.ModelChoiceField(label='Sector que atiende', required=False,
+                                    queryset=Sector.objects.order_by('nombre'),
+                                    empty_label='Todos los sectores')  # DEF-06
     email = forms.EmailField(label='Correo (opcional)', required=False)
     clave_admin = forms.CharField(label='Tu clave de administrador', strip=False,
                                   widget=forms.PasswordInput(attrs={'autocomplete': 'current-password'}))
@@ -58,7 +61,7 @@ class FuncionarioForm(IngresoRutForm):
         self.fields['rut'].widget.attrs['class'] = 'form-control campo-rut'
         for nombre, campo in self.fields.items():
             if nombre != 'rut':
-                campo.widget.attrs.setdefault('class', 'form-select' if nombre in ('tipo', 'especialidad')
+                campo.widget.attrs.setdefault('class', 'form-select' if nombre in ('tipo', 'especialidad', 'sector')
                                               else 'form-control')
 
     def clean(self):

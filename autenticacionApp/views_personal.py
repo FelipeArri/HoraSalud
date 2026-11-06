@@ -79,7 +79,8 @@ def funcionario_nuevo(request):
             try:
                 nuevo, clave = personal.crear_funcionario(
                     request, rut=datos['rut'], nombres=datos['nombres'], apellidos=datos['apellidos'],
-                    tipo=datos['tipo'], especialidad=datos['especialidad'], box=datos['box'], email=datos['email'])
+                    tipo=datos['tipo'], especialidad=datos['especialidad'], box=datos['box'], email=datos['email'],
+                    sector=datos['sector'])
             except personal.PersonalError as error:
                 form.add_error('rut', str(error))
             else:
@@ -131,10 +132,21 @@ def funcionario_accion(request, pk, accion):
     })
 
 
+ACCIONES_HORAS = [RegistroAuditoria.Accion.RESERVA, RegistroAuditoria.Accion.CANCELACION,
+                  RegistroAuditoria.Accion.NO_SHOW, RegistroAuditoria.Accion.ATENDIDA,
+                  RegistroAuditoria.Accion.INGRESO_BLOQUEADO]  # DEF-07 y DEF-08
+
+
 @requiere_administrador
 def auditoria(request):
-    registros = RegistroAuditoria.objects.select_related('actor', 'objetivo')[:100]
-    return render(request, 'autenticacionApp/personal_auditoria.html', {'registros': registros})
+    ver = request.GET.get('ver', 'personal')
+    registros = RegistroAuditoria.objects.select_related('actor', 'objetivo')
+    if ver == 'horas':
+        registros = registros.filter(accion__in=ACCIONES_HORAS)
+    elif ver != 'todo':
+        ver = 'personal'
+        registros = registros.exclude(accion__in=ACCIONES_HORAS)
+    return render(request, 'autenticacionApp/personal_auditoria.html', {'registros': registros[:100], 'ver': ver})
 
 
 # ---------- Profesional ----------

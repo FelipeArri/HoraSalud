@@ -91,6 +91,9 @@ class Profesional(models.Model):
     usuario = models.OneToOneField(Usuario, on_delete=models.CASCADE, primary_key=True, related_name='profesional')
     especialidad = models.ForeignKey('agendaApp.Especialidad', on_delete=models.PROTECT, null=True, blank=True)
     box_atencion = models.CharField(max_length=10, blank=True)
+    # DEF-06 (RF-02): sector que atiende. Vacío = atiende a todos los sectores (por ejemplo, los programas).
+    sector = models.ForeignKey(Sector, on_delete=models.PROTECT, null=True, blank=True,
+                               help_text='Déjalo vacío si atiende a pacientes de todos los sectores.')
 
     class Meta:
         verbose_name_plural = 'Profesionales'
@@ -170,8 +173,9 @@ class Consentimiento(models.Model):
 
 class RegistroAuditoria(models.Model):
     """
-    B-20 · RN-11: quién hizo qué y cuándo con las cuentas del personal. No se edita
-    ni se borra desde la app. Guarda el RUT aparte por si la cuenta se desactiva.
+    B-20 · RN-11: quién hizo qué y cuándo. Cubre las acciones del personal y, desde
+    DEF-07, la reserva, la cancelación y el No-Show. No se edita ni se borra desde la
+    app. Guarda el RUT aparte por si la cuenta se desactiva.
     """
 
     class Accion(models.TextChoices):
@@ -190,6 +194,13 @@ class RegistroAuditoria(models.Model):
         AUSENCIA = 'ausencia', 'Registró ausencia de profesional'
         SOBRECUPO = 'sobrecupo', 'Dio hora en ventanilla / sobrecupo'
         PROXIMO_CONTROL = 'proximo_control', 'Agendó o indicó próximo control'
+        # DEF-07 · horas de los pacientes
+        RESERVA = 'reserva', 'Reservó una hora'
+        CANCELACION = 'cancelacion', 'Canceló una hora'
+        NO_SHOW = 'no_show', 'Marcó inasistencia (No-Show)'
+        ATENDIDA = 'atendida', 'Marcó hora atendida'
+        # DEF-08 · ingreso de pacientes y tutores
+        INGRESO_BLOQUEADO = 'ingreso_bloqueado', 'Ingreso bloqueado por intentos'
 
     fecha = models.DateTimeField(auto_now_add=True)
     actor = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
@@ -202,7 +213,7 @@ class RegistroAuditoria(models.Model):
 
     class Meta:
         verbose_name = 'registro de auditoría'
-        verbose_name_plural = 'Registro de auditoría (personal)'
+        verbose_name_plural = 'Registro de auditoría'
         ordering = ['-fecha']
 
     def __str__(self):

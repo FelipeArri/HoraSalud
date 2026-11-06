@@ -6,8 +6,14 @@
 {% block content %}
 <a class="volver" href="{% url 'personal_funcionarios' %}">{% include 'componentes/icono.html' with n='atras' %}Funcionarios</a>
 <div class="etiqueta-seccion">Administrador CESFAM</div>
-<h1 class="mb-1">Registro de actividad del personal</h1>
+<h1 class="mb-1">Registro de actividad</h1>
 <p class="texto-suave">Últimos 100 movimientos (RN-11). No se puede editar ni borrar.</p>
+
+<nav class="pestanas" aria-label="Qué movimientos ver">
+  <a href="?ver=personal" {% if ver == 'personal' %}class="activa" aria-current="page"{% endif %}>Personal</a>
+  <a href="?ver=horas" {% if ver == 'horas' %}class="activa" aria-current="page"{% endif %}>Horas e ingresos de pacientes</a>
+  <a href="?ver=todo" {% if ver == 'todo' %}class="activa" aria-current="page"{% endif %}>Todo</a>
+</nav>
 
 <div class="tarjeta p-2 p-md-3">
   <div class="table-responsive">

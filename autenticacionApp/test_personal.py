@@ -10,7 +10,7 @@ from openpyxl import load_workbook
 
 from agendaApp.models import Especialidad
 
-from .models import Profesional, RegistroAuditoria, Usuario
+from .models import Profesional, RegistroAuditoria, Sector, Usuario
 
 Accion = RegistroAuditoria.Accion
 
@@ -172,3 +172,22 @@ class AdministradorTests(PersonalBase):
         self.accion(self.some, 'desactivar')
         r = self.client.get(reverse('personal_auditoria'))
         self.assertContains(r, 'Desactivó un funcionario')
+
+    def test_auditoria_separa_personal_y_horas_de_pacientes(self):
+        # DEF-07: las horas de los pacientes tienen su propia pestaña
+        self.accion(self.some, 'desactivar')
+        RegistroAuditoria.objects.create(accion=RegistroAuditoria.Accion.RESERVA, detalle='Hora de prueba DEF-07')
+        personal_ = self.client.get(reverse('personal_auditoria'))
+        self.assertContains(personal_, 'Desactivó un funcionario')
+        self.assertNotContains(personal_, 'Hora de prueba DEF-07')
+        horas = self.client.get(reverse('personal_auditoria'), {'ver': 'horas'})
+        self.assertContains(horas, 'Hora de prueba DEF-07')
+        self.assertNotContains(horas, 'Desactivó un funcionario')
+        self.assertContains(self.client.get(reverse('personal_auditoria'), {'ver': 'todo'}), 'Hora de prueba DEF-07')
+
+    def test_profesional_nuevo_con_sector(self):
+        # DEF-06: la Dirección indica el sector que atiende (vacío = todos)
+        sector = Sector.objects.first()
+        self.client.post(reverse('personal_funcionario_nuevo'),
+                         self.datos_nuevo(rut='32000021-1', sector=sector.pk))
+        self.assertEqual(Profesional.objects.get(usuario__rut='32000021-1').sector, sector)

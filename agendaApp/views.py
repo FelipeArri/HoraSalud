@@ -55,7 +55,7 @@ def pedir_especialidad(request):
     vigentes = {h.bloque.agenda.especialidad_id: h for h in servicios.horas_vigentes(request.paciente)}
     tarjetas = []
     for especialidad in Especialidad.objects.order_by('tipo', 'nombre'):
-        libres = servicios.bloques_reservables(especialidad)
+        libres = servicios.bloques_reservables(especialidad, request.paciente)
         tarjetas.append({'especialidad': especialidad, 'proximo': libres[0] if libres else None,
                          'cantidad': len(libres), 'vigente': vigentes.get(especialidad.pk)})
     return render(request, 'agendaApp/pedir_especialidad.html', {
@@ -70,7 +70,7 @@ def pedir_especialidad(request):
 def pedir_bloque(request, especialidad_id):
     """Paso 2 de 3: elegir dia y hora."""
     especialidad = get_object_or_404(Especialidad, pk=especialidad_id)
-    libres = servicios.bloques_reservables(especialidad)
+    libres = servicios.bloques_reservables(especialidad, request.paciente)
     dias = OrderedDict()
     for bloque in libres:
         dias.setdefault(bloque.agenda.fecha, []).append(bloque)
@@ -95,7 +95,7 @@ def pedir_confirmar(request, bloque_id):
         'agenda__especialidad', 'agenda__profesional__usuario'), pk=bloque_id)
     if request.method == 'POST':
         try:
-            hora = servicios.reservar_hora(request.paciente, bloque.pk)
+            hora = servicios.reservar_hora(request.paciente, bloque.pk, request=request)
         except servicios.ReglaNegocioError as error:
             messages.error(request, str(error))
             return redirect('pedir_bloque', especialidad_id=bloque.agenda.especialidad_id)
@@ -132,7 +132,7 @@ def cancelar(request, hora_id):
     if request.method == 'POST':
         quien = 'Tutor' if request.user.tipo_usuario == 'tutor' else 'Paciente'
         try:
-            servicios.cancelar_hora(hora, request.POST.get('motivo', ''), quien=quien)
+            servicios.cancelar_hora(hora, request.POST.get('motivo', ''), quien=quien, request=request)
         except servicios.ReglaNegocioError as error:
             messages.error(request, str(error))
         else:
@@ -190,7 +190,7 @@ def some_accion(request, hora_id, accion):
     if accion not in acciones:
         return redirect('some_nomina')
     try:
-        acciones[accion](hora)
+        acciones[accion](hora, request=request)  # DEF-07: queda en el registro de auditoría
         messages.success(request, f'Hora de las {hora.bloque.hora_inicio:%H:%M} actualizada.')
     except TransicionInvalida as error:
         messages.error(request, str(error))

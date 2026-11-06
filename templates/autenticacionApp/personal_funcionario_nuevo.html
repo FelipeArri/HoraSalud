@@ -39,12 +39,12 @@
 
 {% block scripts %}
 <script>
-  // Especialidad y box solo tienen sentido para profesionales
+  // Especialidad, box y sector solo tienen sentido para profesionales
   (function () {
     var tipo = document.getElementById('id_tipo');
     function actualizar() {
       var esProfesional = tipo.value === 'profesional';
-      ['grupo-especialidad', 'grupo-box'].forEach(function (id) {
+      ['grupo-especialidad', 'grupo-box', 'grupo-sector'].forEach(function (id) {
         document.getElementById(id).style.display = esProfesional ? '' : 'none';
       });
     }

@@ -121,7 +121,11 @@ class AusenciaTests(Base):
 class VentanillaTests(Base):
     def setUp(self):
         super().setUp()
-        self.agenda = Agenda.objects.filter(profesional=self.prof, fecha__gt=timezone.localdate()).first()
+        # Un día en que el paciente NO tenga ya una hora vigente (los datos demo a veces le asignan una)
+        dias_ocupados = Hora.objects.filter(paciente=self.paciente, estado__in=servicios.ESTADOS_VIGENTES) \
+            .values_list('bloque__agenda__fecha', flat=True)
+        self.agenda = (Agenda.objects.filter(profesional=self.prof, fecha__gt=timezone.localdate())
+                       .exclude(fecha__in=list(dias_ocupados)).first())
 
     def test_dar_hora_de_morbilidad_en_ventanilla(self):
         bloque = self.agenda.bloques.filter(tipo_cupo=Tipo.MORBILIDAD, estado='disponible').first()
