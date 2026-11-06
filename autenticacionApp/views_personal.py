@@ -134,7 +134,8 @@ def funcionario_accion(request, pk, accion):
 
 ACCIONES_HORAS = [RegistroAuditoria.Accion.RESERVA, RegistroAuditoria.Accion.CANCELACION,
                   RegistroAuditoria.Accion.NO_SHOW, RegistroAuditoria.Accion.ATENDIDA,
-                  RegistroAuditoria.Accion.INGRESO_BLOQUEADO]  # DEF-07 y DEF-08
+                  RegistroAuditoria.Accion.INGRESO_BLOQUEADO,  # DEF-07 y DEF-08
+                  RegistroAuditoria.Accion.TUTOR_AUTORIZADO, RegistroAuditoria.Accion.TUTOR_REVOCADO]  # B-10
 
 
 @requiere_administrador
