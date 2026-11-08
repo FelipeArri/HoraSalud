@@ -10,7 +10,30 @@ PrevisionService, con respuestas en un formato propio y estable. Cada adapter
 traduce el formato de su sistema externo. Hoy los clientes consultan la base
 fonasa_simulado (fonasaSimuladoApp), con datos ficticios; con un
 convenio real se cambia solo el cliente, no el resto del codigo.
+
+DEF-09 (CP-17): si el sistema externo no responde (caida, demora, error de red
+o de base de datos), el adapter lanza ServicioExternoNoDisponible. Quien llama
+decide que mostrar; nunca llega un error interno (500) a la pantalla.
 """
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+class ServicioExternoNoDisponible(Exception):
+    """El sistema clinico o FONASA no respondio. El mensaje es apto para mostrar."""
+
+    def __init__(self, servicio):
+        self.servicio = servicio
+        super().__init__(f'{servicio} no responde en este momento. Intenta de nuevo en unos minutos.')
+
+
+def _consultar(servicio, cliente, ruta):
+    try:
+        return cliente.obtener(ruta)
+    except Exception as error:  # cualquier falla del sistema externo queda controlada
+        logger.warning('%s no disponible (%s): %s', servicio, ruta.split('/')[1], error)
+        raise ServicioExternoNoDisponible(servicio) from error
 
 
 # ---------- Interfaces (lo que conoce HoraSalud) ----------
@@ -39,7 +62,7 @@ class AdapterSistemaClinico(SistemaClinicoService):
         self.cliente_externo = cliente_externo  # Adaptee
 
     def consultar_inscripcion(self, rut):
-        ficha = self.cliente_externo.obtener(f'/pacientes/{rut}')
+        ficha = _consultar('El sistema clínico del CESFAM', self.cliente_externo, f'/pacientes/{rut}')
         if not ficha or ficha.get('estado_inscripcion') != 'ACTIVA':
             return {'inscrito': False, 'nombres': '', 'apellidos': '', 'sector': None, 'telefono': ''}
         apellidos = ' '.join(p for p in [ficha.get('apellido_paterno'), ficha.get('apellido_materno')] if p)
@@ -58,7 +81,7 @@ class AdapterFonasa(PrevisionService):
         self.cliente_externo = cliente_externo  # Adaptee
 
     def consultar_prevision(self, rut):
-        respuesta = self.cliente_externo.obtener(f'/certificador/{rut}')
+        respuesta = _consultar('FONASA', self.cliente_externo, f'/certificador/{rut}')
         if not respuesta or not respuesta.get('afiliado_vigente'):
             return {'prevision': self.SIN_PREVISION, 'tramo': '', 'vigente': False}
         prevision = self.CODIGOS.get(respuesta.get('codigo_prevision'), self.SIN_PREVISION)

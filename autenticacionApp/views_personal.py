@@ -4,6 +4,7 @@ gestión de funcionarios (Administrador CESFAM), auditoría y agenda del profesi
 """
 from django.contrib import messages
 from django.contrib.auth.forms import PasswordChangeForm
+from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -12,7 +13,7 @@ from . import personal
 from .forms import ConfirmarAdminForm, FuncionarioForm, IngresoPersonalForm
 from .models import RegistroAuditoria, Usuario
 from .sesion import requiere_administrador, requiere_profesional
-from .views import _destino, _iniciar_sesion
+from .views import METODO_CLAVE, _destino, _iniciar_sesion
 
 AVISO_SESION_CERRADA = ('Se cerró tu sesión: escribiste mal tu clave de administrador 3 veces. '
                         'Quedó registrado en la auditoría.')
@@ -28,8 +29,7 @@ def ingresar(request):
         except personal.PersonalError as error:
             form.add_error(None, str(error))
         else:
-            _iniciar_sesion(request, usuario)
-            personal.auditar(request, RegistroAuditoria.Accion.INGRESO, actor=usuario, objetivo=usuario)
+            _iniciar_sesion(request, usuario, METODO_CLAVE)
             if usuario.debe_cambiar_clave:
                 return redirect('personal_cambiar_clave')
             return redirect(_destino(usuario))
@@ -135,18 +135,22 @@ def funcionario_accion(request, pk, accion):
 ACCIONES_HORAS = [RegistroAuditoria.Accion.RESERVA, RegistroAuditoria.Accion.CANCELACION,
                   RegistroAuditoria.Accion.NO_SHOW, RegistroAuditoria.Accion.ATENDIDA,
                   RegistroAuditoria.Accion.INGRESO_BLOQUEADO,  # DEF-07 y DEF-08
-                  RegistroAuditoria.Accion.TUTOR_AUTORIZADO, RegistroAuditoria.Accion.TUTOR_REVOCADO]  # B-10
+                  RegistroAuditoria.Accion.TUTOR_AUTORIZADO, RegistroAuditoria.Accion.TUTOR_REVOCADO,
+                  RegistroAuditoria.Accion.TUTOR_ACTUA]  # B-10
+ROLES_PERSONAS = [Usuario.Tipo.PACIENTE.label, Usuario.Tipo.TUTOR.label]
 
 
 @requiere_administrador
 def auditoria(request):
     ver = request.GET.get('ver', 'personal')
     registros = RegistroAuditoria.objects.select_related('actor', 'objetivo')
+    # Pacientes y tutores: sus horas, sus ingresos y salidas, y el vínculo de tutor
+    de_personas = Q(accion__in=ACCIONES_HORAS) | Q(actor_rol__in=ROLES_PERSONAS)
     if ver == 'horas':
-        registros = registros.filter(accion__in=ACCIONES_HORAS)
+        registros = registros.filter(de_personas)
     elif ver != 'todo':
         ver = 'personal'
-        registros = registros.exclude(accion__in=ACCIONES_HORAS)
+        registros = registros.exclude(de_personas)
     return render(request, 'autenticacionApp/personal_auditoria.html', {'registros': registros[:100], 'ver': ver})
 
 

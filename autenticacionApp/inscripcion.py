@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from django.db import transaction
 from django.utils import timezone
 
-from .adapter_inscripcion import PrevisionService, servicios_externos
+from .adapter_inscripcion import PrevisionService, ServicioExternoNoDisponible, servicios_externos
 from .models import CodigoEnrolamiento, Paciente, Sector, Usuario
 
 MENSAJES_RECHAZO = {
@@ -35,6 +35,7 @@ class Consulta:
     inscripcion: dict = field(default_factory=dict)
     prevision: dict = field(default_factory=dict)
     motivo_rechazo: str = ''
+    servicio_caido: bool = False            # DEF-09: el sistema clinico o FONASA no respondio
 
     @property
     def puede_recibir_codigo(self):
@@ -73,11 +74,16 @@ def consultar(rut, servicios=None):
     if usuario and usuario.tipo_usuario == Usuario.Tipo.TUTOR:
         consulta.es_tutor = True  # actua por otra persona: no requiere inscripcion ni FONASA
         return consulta
-    consulta.inscripcion = clinico.consultar_inscripcion(rut)
-    if not consulta.inscripcion['inscrito']:
-        consulta.motivo_rechazo = MENSAJES_RECHAZO['no_inscrito']
+    try:
+        consulta.inscripcion = clinico.consultar_inscripcion(rut)
+        if not consulta.inscripcion['inscrito']:
+            consulta.motivo_rechazo = MENSAJES_RECHAZO['no_inscrito']
+            return consulta
+        consulta.prevision = fonasa.consultar_prevision(rut)
+    except ServicioExternoNoDisponible as error:  # DEF-09: sin datos oficiales no se entrega nada
+        consulta.servicio_caido = True
+        consulta.motivo_rechazo = f'{error} No se entregó ningún código ni se cambió ningún dato.'
         return consulta
-    consulta.prevision = fonasa.consultar_prevision(rut)
     if consulta.prevision['prevision'] != PrevisionService.FONASA:
         consulta.motivo_rechazo = MENSAJES_RECHAZO[consulta.prevision['prevision']]
     return consulta

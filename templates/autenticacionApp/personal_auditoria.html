@@ -11,22 +11,24 @@
 
 <nav class="pestanas" aria-label="Qué movimientos ver">
   <a href="?ver=personal" {% if ver == 'personal' %}class="activa" aria-current="page"{% endif %}>Personal</a>
-  <a href="?ver=horas" {% if ver == 'horas' %}class="activa" aria-current="page"{% endif %}>Horas e ingresos de pacientes</a>
+  <a href="?ver=horas" {% if ver == 'horas' %}class="activa" aria-current="page"{% endif %}>Pacientes y tutores</a>
   <a href="?ver=todo" {% if ver == 'todo' %}class="activa" aria-current="page"{% endif %}>Todo</a>
 </nav>
 
 <div class="tarjeta p-2 p-md-3">
   <div class="table-responsive">
   <table class="tabla-nomina">
-    <thead><tr><th>Fecha</th><th>Quién</th><th>Acción</th><th>Sobre quién</th><th>Detalle</th></tr></thead>
+    <thead><tr><th>Fecha</th><th>Quién</th><th>Acción</th><th>Sobre quién</th><th>Descripción</th></tr></thead>
     <tbody>
       {% for r in registros %}
       <tr>
         <td class="text-nowrap small">{{ r.fecha|date:"d-m-Y H:i:s" }}</td>
-        <td>{{ r.actor.get_full_name|default:"—" }}<div class="small texto-suave">{{ r.actor_rut }}</div></td>
+        <td>{{ r.actor.get_full_name|default:"Sistema HoraSalud" }}
+          <div class="small texto-suave">{% if r.actor_rol %}{{ r.actor_rol }} · {% endif %}{{ r.actor_rut }}</div></td>
         <td>{{ r.get_accion_display }}</td>
-        <td>{% if r.objetivo and r.objetivo != r.actor %}{{ r.objetivo.get_full_name }}<div class="small texto-suave">{{ r.objetivo_rut }}</div>{% else %}—{% endif %}</td>
-        <td class="small">{{ r.detalle|default:"" }}</td>
+        <td>{% if r.objetivo_rut and r.objetivo_rut != r.actor_rut %}{{ r.objetivo.get_full_name|default:"(cuenta eliminada)" }}
+          <div class="small texto-suave">{% if r.objetivo_rol %}{{ r.objetivo_rol }} · {% endif %}{{ r.objetivo_rut }}</div>{% else %}—{% endif %}</td>
+        <td class="small">{{ r.descripcion|default:r.detalle }}</td>
       </tr>
       {% empty %}
       <tr><td colspan="5" class="text-center texto-suave">Aún no hay movimientos.</td></tr>
