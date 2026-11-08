@@ -140,7 +140,8 @@ def registrar_ausencia(profesional, desde, hasta, motivo, detalle='', request=No
         especialidad = hora.bloque.agenda.especialidad
         EsperaPaciente.objects.filter(especialidad=especialidad).update(orden=F('orden') + 1)
         EsperaPaciente.objects.update_or_create(especialidad=especialidad, paciente=hora.paciente,
-                                                defaults={'orden': 1})
+                                                defaults={'orden': 1,
+                                                          'inscrito_por': EsperaPaciente.Origen.CESFAM})
         suspendidas += 1
     if request:
         auditar(request, Accion.AUSENCIA, objetivo=profesional.usuario,

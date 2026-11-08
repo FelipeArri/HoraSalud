@@ -1,0 +1,12 @@
+{# B-14 · RN-17: las reglas en palabras simples (se repiten en "¿Cómo funciona?") #}
+<div class="tarjeta mt-3 reglas-lista" id="reglas-lista">
+  <strong class="d-block mb-2">Cómo funciona</strong>
+  <ul class="mb-0">
+    <li>Te avisamos <strong>en orden</strong>: primero a quien se inscribió antes.</li>
+    <li>Si la hora es en <strong>más de 2 días</strong>, tienes <strong>{{ reglas.plazo_largo }}</strong> para aceptarla.</li>
+    <li>Si la hora es en <strong>1 a 2 días</strong>, tienes <strong>{{ reglas.plazo_corto }}</strong>.</li>
+    <li>Si <strong>no puedes</strong> o no alcanzas a responder, <strong>no pierdes tu lugar</strong>: esa hora pasa a la persona siguiente.</li>
+    <li>Las horas que se liberan con menos de 1 día de aviso se entregan en la <strong>ventanilla del SOME</strong>.</li>
+    <li>Solo enviamos avisos entre las {{ reglas.desde }}:00 y las {{ reglas.hasta }}:00.</li>
+  </ul>
+</div>

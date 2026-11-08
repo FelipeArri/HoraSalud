@@ -19,4 +19,6 @@ urlpatterns = [
     path('', include('pantallaApp.urls')),
     path('', include('autenticacionApp.urls')),
     path('', include('agendaApp.urls')),
+    path('', include('listaEsperaApp.urls')),  # B-14
+    path('', include('notificacionesApp.urls')),  # B-14: app instalable y avisos push
 ]

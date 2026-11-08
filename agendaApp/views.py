@@ -17,6 +17,8 @@ from autenticacionApp.adapter_inscripcion import ServicioExternoNoDisponible
 from autenticacionApp.models import Paciente
 from autenticacionApp.sesion import requiere_paciente, requiere_some
 
+from listaEsperaApp import servicios as lista_espera
+
 from . import gestion_agendas, prevision, servicios
 from .estados_hora import TransicionInvalida
 from .models import Agenda, BloqueHorario, Especialidad, Hora
@@ -45,7 +47,15 @@ def mi_inicio(request):
         'cantidad_vigentes': vigentes.count(),
         'suspendidas': gestion_agendas.horas_suspendidas_sin_reagendar(request.paciente),  # B-21 · RN-13
         'indicaciones': gestion_agendas.indicaciones_pendientes(request.paciente),  # P-10
+        'ofertas': lista_espera.ofertas_pendientes(request.paciente),  # B-14: cupo ofrecido
+        'en_espera': request.paciente.esperas.count(),
     })
+
+
+def ayuda(request):
+    """B-14: cómo funciona HoraSalud (lista de espera, avisos, instalar la app, tutor)."""
+    from listaEsperaApp.views import _reglas
+    return render(request, 'agendaApp/ayuda.html', {'reglas': _reglas()})
 
 
 @requiere_paciente
@@ -82,9 +92,13 @@ def pedir_bloque(request, especialidad_id):
         dia_elegido = None
     if dia_elegido not in dias:
         dia_elegido = next(iter(dias), None)
+    espera = request.paciente.esperas.filter(especialidad=especialidad).first()  # B-14
     return render(request, 'agendaApp/pedir_bloque.html', {
         'especialidad': especialidad, 'dias': list(dias), 'dia_elegido': dia_elegido,
         'bloques': dias.get(dia_elegido, []), 'paso': 2,
+        'espera': espera, 'lugar': lista_espera.posicion(espera) if espera else None,
+        'tiene_hora': servicios.horas_vigentes(request.paciente).filter(
+            bloque__agenda__especialidad=especialidad).exists(),
     })
 
 

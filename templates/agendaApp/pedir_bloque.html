@@ -33,10 +33,27 @@
       </div>
       <p class="texto-suave small mt-3 mb-0">Atiende: {{ bloques.0.agenda.profesional.usuario.get_full_name }} · Box {{ bloques.0.agenda.profesional.box_atencion }}</p>
     </div>
+    {% if espera %}
+      <p class="texto-suave small text-center mt-3">Estás en el lugar {{ lugar }} de la <a href="{% url 'mi_lista_espera' %}">lista de espera</a> de {{ especialidad }}.</p>
+    {% elif not tiene_hora %}
+      <form method="post" action="{% url 'inscribirme_lista' especialidad.pk %}" class="text-center mt-3">{% csrf_token %}
+        <p class="texto-suave small mb-2">¿Ninguno de estos días te sirve?</p>
+        <button class="btn btn-borde btn-sm">Avísame si se libera una hora antes</button>
+      </form>
+    {% endif %}
   {% else %}
     <div class="tarjeta text-center">
       <p class="mb-1"><strong>No quedan horas libres en los próximos días.</strong></p>
-      <p class="texto-suave mb-0">Acércate al SOME para quedar en la lista de espera.</p>
+      {% if espera %}
+        <p class="mb-2">Estás en el <strong>lugar {{ lugar }}</strong> de la lista de espera de {{ especialidad }}.</p>
+        <a href="{% url 'mi_lista_espera' %}" class="btn btn-borde">Ver mi lista de espera</a>
+      {% elif not tiene_hora %}
+        <p class="texto-suave">Inscríbete en la lista de espera: si alguien cancela, te avisamos en orden de llegada.</p>
+        <form method="post" action="{% url 'inscribirme_lista' especialidad.pk %}">{% csrf_token %}
+          <button class="btn btn-verde btn-lg">{% include 'componentes/icono.html' with n='reloj' %} Avísame si se libera una hora</button>
+        </form>
+        <p class="small texto-suave mt-2 mb-0"><a href="{% url 'ayuda' %}#lista-espera">¿Cómo funciona la lista de espera?</a></p>
+      {% endif %}
     </div>
   {% endif %}
 </div>

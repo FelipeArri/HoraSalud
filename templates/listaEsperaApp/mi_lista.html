@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Lista de espera{% endblock %}
+{% block ancho_alertas %}medio{% endblock %}
+
+{% block content %}
+<div class="medio">
+  <a class="volver" href="{% url 'mi_inicio' %}">{% include 'componentes/icono.html' with n='atras' %}Inicio</a>
+  <h1 class="mb-1">Lista de espera</h1>
+  <p class="texto-suave">Si alguien cancela su hora, te la ofrecemos <strong>en orden de llegada</strong>.</p>
+
+  {% for o in ofertas %}
+  <a class="aviso-oferta mb-3" href="{% url 'oferta_cupo' o.pk %}">
+    <span class="icono-caja">{% include 'componentes/icono.html' with n='reloj' %}</span>
+    <span class="flex-fill">
+      <span class="titulo">¡Se liberó una hora para ti!</span>
+      <span class="detalle">{{ o.cupo.bloque.agenda.especialidad }} · <span class="capital">{{ o.cupo.bloque.agenda.fecha|date:"l j \d\e F" }}</span> a las {{ o.cupo.bloque.hora_inicio|time:"H:i" }}. Responde antes de las {{ o.vence_en|time:"H:i" }}.</span>
+    </span>
+    <span class="btn btn-verde">Ver</span>
+  </a>
+  {% endfor %}
+
+  <div class="etiqueta-seccion mb-2">Dónde estás inscrito</div>
+  {% for f in filas %}
+    <div class="tarjeta d-flex justify-content-between align-items-center flex-wrap gap-3">
+      <div class="d-flex gap-3 align-items-center">
+        <span class="lugar-fila" aria-label="Lugar {{ f.lugar }}">{{ f.lugar }}°</span>
+        <div>
+          <strong class="d-block">{{ f.espera.especialidad }}</strong>
+          <span class="texto-suave small">Lugar {{ f.lugar }} de {{ f.total }} · inscrito el {{ f.espera.creado_en|date:"d-m-Y" }}</span>
+        </div>
+      </div>
+      <form method="post" action="{% url 'salir_lista' f.espera.pk %}" onsubmit="return confirm('¿Salir de la lista de espera de {{ f.espera.especialidad|escapejs }}? Perderás tu lugar.');">
+        {% csrf_token %}<button class="btn btn-rojo-borde btn-sm">Salir de la lista</button>
+      </form>
+    </div>
+  {% empty %}
+    <div class="tarjeta text-center">
+      <p class="mb-1"><strong>No estás en ninguna lista de espera.</strong></p>
+      <p class="texto-suave mb-3">Cuando una especialidad no tenga horas libres, podrás inscribirte desde "Pedir hora".</p>
+      <a href="{% url 'pedir_especialidad' %}" class="btn btn-verde">Pedir hora</a>
+    </div>
+  {% endfor %}
+
+  {% include 'listaEsperaApp/_reglas.html' %}
+
+  <div class="mt-3">{% include 'componentes/app_avisos.html' %}</div>
+</div>
+{% endblock %}

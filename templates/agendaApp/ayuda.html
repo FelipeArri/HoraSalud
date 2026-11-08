@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}¿Cómo funciona HoraSalud?{% endblock %}
+
+{% block content %}
+<div class="medio ayuda">
+  <h1 class="mb-1">¿Cómo funciona HoraSalud?</h1>
+  <p class="texto-suave">Todo lo que puedes hacer desde tu teléfono, explicado paso a paso.</p>
+
+  <section class="tarjeta" id="entrar">
+    <h2 class="h5">{% include 'componentes/icono.html' with n='huella' %} Entrar</h2>
+    <p class="mb-0">La primera vez, en el <strong>SOME del CESFAM</strong> te entregan un código para activar tu huella. Desde ahí entras con tu <strong>huella, tu rostro o el PIN</strong> de tu teléfono: no necesitas clave.</p>
+  </section>
+
+  <section class="tarjeta" id="app">
+    <h2 class="h5">{% include 'componentes/icono.html' with n='telefono' %} HoraSalud como app</h2>
+    <p>Puedes dejar HoraSalud como un ícono en tu teléfono y abrirla sin entrar al navegador:</p>
+    <ul class="mb-0">
+      <li><strong>Android:</strong> en tu inicio de HoraSalud toca <strong>"Instalar HoraSalud"</strong>.</li>
+      <li><strong>iPhone:</strong> en Safari toca <strong>Compartir</strong> y luego <strong>Agregar a inicio</strong>.</li>
+      <li>Si no sabes cómo, en el SOME te ayudan a dejarla instalada.</li>
+    </ul>
+  </section>
+
+  <section class="tarjeta" id="avisos">
+    <h2 class="h5">{% include 'componentes/icono.html' with n='reloj' %} Avisos en tu teléfono</h2>
+    <p>Toca <strong>"Activar avisos"</strong> y acepta el permiso. Así, si se libera una hora para ti, tu teléfono <strong>suena y vibra</strong> aunque HoraSalud esté cerrada. Al tocar el aviso se abre directo la hora ofrecida.</p>
+    <p class="small texto-suave mb-0">Los avisos son gratis. Por tu privacidad, solo dicen "se liberó una hora": el detalle lo ves dentro de la app.</p>
+  </section>
+
+  <section class="tarjeta" id="lista-espera">
+    <h2 class="h5">{% include 'componentes/icono.html' with n='lista' %} Lista de espera</h2>
+    <p>Si una especialidad no tiene horas, toca <strong>"Avísame si se libera una hora"</strong>. También te pueden inscribir en el SOME.</p>
+    <ul>
+      <li>Te avisamos <strong>en orden de llegada</strong>: primero a quien se inscribió antes.</li>
+      <li>Hora en <strong>más de 2 días</strong>: tienes <strong>{{ reglas.plazo_largo }}</strong> para aceptarla.</li>
+      <li>Hora en <strong>1 a 2 días</strong>: tienes <strong>{{ reglas.plazo_corto }}</strong>.</li>
+      <li>Si <strong>no puedes</strong> o no alcanzas a responder, <strong>no pierdes tu lugar</strong>: esa hora pasa a la persona siguiente.</li>
+      <li>Horas que se liberan con menos de 1 día de aviso: se entregan en la <strong>ventanilla del SOME</strong>.</li>
+      <li>Solo enviamos avisos entre las {{ reglas.desde }}:00 y las {{ reglas.hasta }}:00.</li>
+    </ul>
+    <p class="small texto-suave mb-0">Si no respondes varias veces seguidas, el SOME puede llamarte para saber si necesitas ayuda.</p>
+  </section>
+
+  <section class="tarjeta" id="horas">
+    <h2 class="h5">{% include 'componentes/icono.html' with n='calendario' %} Pedir, confirmar y cancelar</h2>
+    <ul class="mb-0">
+      <li><strong>Pedir hora:</strong> eliges la especialidad, el día y la hora.</li>
+      <li><strong>Confirmar:</strong> avísanos que irás con el botón "Confirmar asistencia".</li>
+      <li><strong>Cancelar:</strong> hasta 2 horas antes. Así la hora le sirve a otra persona.</li>
+      <li>Si no llegas y no cancelaste, queda registrado como inasistencia.</li>
+    </ul>
+  </section>
+
+  <section class="tarjeta" id="tutor">
+    <h2 class="h5">{% include 'componentes/icono.html' with n='grupo' %} Tutor o cuidador</h2>
+    <p class="mb-0">Un familiar puede pedir y cancelar horas por ti, y recibir los avisos de la lista de espera. Lo autorizas en <strong>"Mis datos y privacidad"</strong> o en el SOME.</p>
+  </section>
+</div>
+{% endblock %}

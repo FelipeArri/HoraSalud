@@ -324,3 +324,29 @@ a.chip-usuario:hover { background: var(--verde-borde); color: var(--verde-oscuro
 .bloque-cal.sobrecupo { border-left: 4px solid var(--rojo); }
 .leyenda-cal { display: flex; flex-wrap: wrap; gap: .75rem; font-size: .8rem; }
 .leyenda-cal .bloque-cal { display: inline-block; margin: 0; }
+
+/* ---------- B-14 · Lista de espera, avisos y app instalable ---------- */
+a.aviso-oferta {
+  display: flex; align-items: center; gap: 1rem; text-decoration: none; color: var(--texto);
+  background: var(--verde-suave); border: 2px solid var(--verde); border-radius: var(--radio);
+  padding: 1rem 1.1rem; box-shadow: var(--sombra-alta);
+}
+a.aviso-oferta .titulo { display: block; font-weight: 800; font-size: 1.15rem; color: var(--verde-oscuro); }
+a.aviso-oferta .detalle { display: block; font-size: .95rem; }
+a.aviso-oferta .icono-caja { background: var(--verde); color: #fff; flex: none; }
+a.aviso-oferta .btn { flex: none; }
+.lugar-fila {
+  width: 56px; height: 56px; border-radius: 14px; display: grid; place-items: center; flex: none;
+  background: var(--azul-suave); color: var(--azul); font-weight: 800; font-size: 1.3rem;
+}
+.cuenta-regresiva {
+  display: flex; align-items: center; gap: .6rem; padding: .8rem 1rem; border-radius: 12px;
+  background: var(--ambar-suave); color: var(--ambar); font-size: 1.05rem;
+}
+.cuenta-regresiva.urgente { background: var(--rojo-suave); color: var(--rojo); }
+.reglas-lista ul, .ayuda ul { padding-left: 1.2rem; }
+.reglas-lista li, .ayuda li { margin-bottom: .35rem; }
+.ayuda h2 { display: flex; align-items: center; gap: .5rem; color: var(--verde-oscuro); }
+.texto-ok { color: var(--verde-oscuro); font-weight: 600; }
+.panel-app .icono-caja { flex: none; }
+.pestanas.flex-wrap a { flex: 1 1 auto; }

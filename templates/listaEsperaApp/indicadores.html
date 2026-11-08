@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}Indicadores de la lista de espera{% endblock %}
+{% block ancho_alertas %}medio{% endblock %}
+
+{% block content %}
+<div class="medio">
+  <div class="etiqueta-seccion">Administrador CESFAM</div>
+  <h1 class="mb-1">Indicadores de la lista de espera</h1>
+  <p class="texto-suave">Sirven para <strong>calibrar los tramos</strong> (RN-17). Hoy: más de {{ reglas.horas_largo }} h → {{ reglas.plazo_largo }} para responder; {{ reglas.horas_corto }} a {{ reglas.horas_largo }} h → {{ reglas.plazo_corto }}; menos de {{ reglas.horas_corto }} h → ventanilla. Son solo cantidades, sin datos personales.</p>
+
+  <div class="indicadores">
+    <div class="indicador"><strong>{{ total_cupos }}</strong><span>Cupos liberados</span></div>
+    <div class="indicador"><strong>{{ reasignados }}</strong><span>Tomados por la lista</span></div>
+    <div class="indicador"><strong>{% if pct_reasignados is not None %}{{ pct_reasignados }} %{% else %}—{% endif %}</strong><span>Aprovechamiento</span></div>
+    <div class="indicador"><strong>{{ filas|length }}</strong><span>Especialidades con fila</span></div>
+  </div>
+
+  <h2 class="h5">Respuestas por tramo</h2>
+  <div class="tarjeta p-2 p-md-3 mb-4"><div class="table-responsive">
+    <table class="tabla-nomina">
+      <thead><tr><th>Tramo</th><th>Ofertas</th><th>Aceptadas</th><th>No puede</th><th>Sin respuesta</th><th>% aceptación</th><th>Demora media</th></tr></thead>
+      <tbody>
+      {% for t in por_tramo %}
+        <tr>
+          <td data-rotulo="Tramo"><strong>{{ t.nombre }}</strong></td>
+          <td data-rotulo="Ofertas">{{ t.datos.total }}</td>
+          <td data-rotulo="Aceptadas">{{ t.datos.aceptada }}</td>
+          <td data-rotulo="No puede">{{ t.datos.rechazada }}</td>
+          <td data-rotulo="Sin respuesta">{{ t.datos.vencida }}</td>
+          <td data-rotulo="% aceptación">{% if t.datos.pct_aceptadas is not None %}{{ t.datos.pct_aceptadas }} %{% else %}—{% endif %}</td>
+          <td data-rotulo="Demora media">{% if t.datos.demora_min is not None %}{{ t.datos.demora_min }} min{% else %}—{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div></div>
+
+  <h2 class="h5">Qué pasó con cada cupo, según la anticipación con que se canceló</h2>
+  <div class="tarjeta p-2 p-md-3 mb-4"><div class="table-responsive">
+    <table class="tabla-nomina">
+      <thead><tr><th>Anticipación</th><th>Cupos</th><th>Lista de espera</th><th>Ventanilla</th><th>Libre en la app</th><th>En curso</th><th>% tomados</th></tr></thead>
+      <tbody>
+      {% for r in por_rango %}
+        <tr>
+          <td data-rotulo="Anticipación"><strong>{{ r.nombre }}</strong></td>
+          <td data-rotulo="Cupos">{{ r.datos.total }}</td>
+          <td data-rotulo="Lista de espera">{{ r.datos.reasignado }}</td>
+          <td data-rotulo="Ventanilla">{{ r.datos.ventanilla }}</td>
+          <td data-rotulo="Libre en la app">{{ r.datos.libre_app }}</td>
+          <td data-rotulo="En curso">{{ r.datos.en_curso }}</td>
+          <td data-rotulo="% tomados">{% if r.datos.pct_reasignados is not None %}{{ r.datos.pct_reasignados }} %{% else %}—{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div></div>
+
+  <h2 class="h5">Filas actuales</h2>
+  {% for e in filas %}
+    <div class="tarjeta d-flex justify-content-between flex-wrap gap-2">
+      <strong>{{ e.nombre }}</strong>
+      <span>{{ e.en_espera }} en espera{% if e.sin_responder %} · <span class="estado estado-reasignada">{{ e.sin_responder }} sin responder {{ reglas.alerta }}+ veces</span>{% endif %}</span>
+    </div>
+  {% empty %}
+    <div class="tarjeta text-center texto-suave">No hay personas en lista de espera.</div>
+  {% endfor %}
+
+  <p class="small texto-suave mt-3">Sugerencia: revisar estos números cada 3 meses. Si en un tramo casi nadie acepta o la mayoría no responde, conviene ajustar sus horas o su plazo en la configuración del sistema.</p>
+</div>
+{% endblock %}

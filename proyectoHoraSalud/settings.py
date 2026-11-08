@@ -46,6 +46,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'proyectoHoraSalud.middleware.SinCacheParaSesionMiddleware',  # DEF-03
     'proyectoHoraSalud.middleware.CabecerasSegurasApiMiddleware',  # DEF-10 (CP-31)
+    'listaEsperaApp.middleware.ProcesarListaEsperaMiddleware',  # B-14 (RF-06)
 ]
 
 ROOT_URLCONF = 'proyectoHoraSalud.urls'
@@ -188,6 +189,16 @@ if not HORASALUD_CLAVE_CIFRADO and not DEBUG:
 # Ingreso sin huella (modo demostracion). Solo con DEBUG y SOLO desde
 # localhost: nunca desde el dominio publico del tunel (ver autenticacionApp.passkeys).
 HORASALUD_INGRESO_DEMO = DEBUG and os.getenv('HORASALUD_INGRESO_DEMO', 'True') == 'True'
+# B-14: avisos push (Web Push) gratuitos. Las claves se generan una vez con
+#   python manage.py generar_claves_push
+# Sin ellas la app funciona igual, pero los avisos solo se ven al entrar a HoraSalud.
+VAPID_PUBLIC_KEY = os.getenv('VAPID_PUBLIC_KEY', '')
+VAPID_PRIVATE_KEY = os.getenv('VAPID_PRIVATE_KEY', '')
+VAPID_CONTACTO = os.getenv('VAPID_CONTACTO', 'mailto:contacto@horasalud.cl')
+# B-14: la lista de espera revisa plazos vencidos al recibir visitas (como máximo cada 30 s).
+# En el servidor real, además, se deja corriendo: python manage.py procesar_lista_espera --cada 60
+HORASALUD_LISTA_ESPERA_AUTOMATICA = True
+
 X_FRAME_OPTIONS = 'DENY'
 SECURE_CONTENT_TYPE_NOSNIFF = True
 if not DEBUG:

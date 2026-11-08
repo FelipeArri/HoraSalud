@@ -1,12 +1,13 @@
 """
 Patron Factory Method (D26-C03).
 
-Elige el canal (Strategy) segun los datos del paciente: prefiere el canal
-que efectivamente puede usar (RNF-03).
+Elige el canal (Strategy) segun los datos del paciente: si activo los avisos en
+su telefono (o en el de su tutor), aviso push; si no, aviso dentro de la app
+(RNF-03). Ambos canales son gratuitos.
 """
 import uuid
 
-from .estrategias import AppStrategy, EmailStrategy, SmsStrategy
+from .estrategias import AvisoEnAppStrategy, PushStrategy
 
 
 class Notificacion:
@@ -20,15 +21,14 @@ class Notificacion:
 
     def enviar(self):
         # La notificacion no sabe COMO se envia: delega en la Strategy
-        self.estrategia.enviar(self.mensaje, self.destinatario)
-        self.estado = 'enviada'
+        resultado = self.estrategia.enviar(self.mensaje, self.destinatario)
+        self.estado = 'enviada' if resultado else 'fallida'
+        return resultado
 
 
 class NotificacionFactory:
-    def __init__(self, repositorio_usuarios, gateway_sms, gateway_email, servicio_push):
+    def __init__(self, repositorio_usuarios, servicio_push):
         self.repositorio_usuarios = repositorio_usuarios
-        self.gateway_sms = gateway_sms
-        self.gateway_email = gateway_email
         self.servicio_push = servicio_push
 
     def crear_notificacion(self, paciente_id, hora_id, mensaje):
@@ -37,7 +37,5 @@ class NotificacionFactory:
 
     def _elegir_estrategia(self, destinatario):
         if destinatario.get('app_instalada'):
-            return AppStrategy(self.servicio_push)
-        if destinatario.get('telefono'):
-            return SmsStrategy(self.gateway_sms)
-        return EmailStrategy(self.gateway_email)
+            return PushStrategy(self.servicio_push)
+        return AvisoEnAppStrategy()

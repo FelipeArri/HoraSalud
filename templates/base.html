@@ -6,6 +6,8 @@
   <meta name="theme-color" content="#1f7a3a">
   <title>{% block title %}HoraSalud{% endblock %} · CESFAM Padre Esteban Gumucio</title>
   {% include 'componentes/favicon.html' %}
+  <link rel="manifest" href="{% url 'manifest' %}">{# B-14: instalable como app #}
+  <meta name="csrf-token" content="{{ csrf_token }}">
   <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
   <link rel="stylesheet" href="{% static 'css/estilos.css' %}">
 </head>
@@ -23,10 +25,12 @@
             <a href="{% url 'mi_inicio' %}" class="d-none d-md-inline-flex {% if ruta == 'mi_inicio' %}activo{% endif %}">Inicio</a>
             <a href="{% url 'pedir_especialidad' %}" class="d-none d-md-inline-flex {% if ruta|slice:':5' == 'pedir' %}activo{% endif %}">Pedir hora</a>
             <a href="{% url 'mis_horas' %}" class="d-none d-md-inline-flex {% if ruta == 'mis_horas' %}activo{% endif %}">Mis horas</a>
+            <a href="{% url 'mi_lista_espera' %}" class="d-none d-md-inline-flex {% if ruta == 'mi_lista_espera' or ruta == 'oferta_cupo' %}activo{% endif %}">Lista de espera</a>
           {% endif %}
           {% if es_some %}
             <a href="{% url 'some_nomina' %}" class="d-none d-md-inline-flex {% if ruta == 'some_nomina' %}activo{% endif %}">Nómina</a>
             <a href="{% url 'some_enrolar' %}" class="d-none d-md-inline-flex {% if ruta == 'some_enrolar' %}activo{% endif %}">Activar huella</a>
+            <a href="{% url 'some_lista_espera' %}" class="d-none d-md-inline-flex {% if ruta == 'some_lista_espera' %}activo{% endif %}">Lista de espera</a>
             <a href="{% url 'agendas_semana' %}" class="d-none d-md-inline-flex {% if ruta|slice:':7' == 'agendas' %}activo{% endif %}">Agendas</a>
             <a href="{% url 'some_tutores' %}" class="d-none d-md-inline-flex {% if ruta == 'some_tutores' %}activo{% endif %}">Tutores</a>
             <a href="{% url 'some_solicitudes' %}" class="d-none d-md-inline-flex {% if ruta == 'some_solicitudes' %}activo{% endif %}">Solicitudes</a>
@@ -36,6 +40,7 @@
             <a href="{% url 'personal_funcionarios' %}" class="d-none d-md-inline-flex {% if ruta|slice:':20' == 'personal_funcionario' %}activo{% endif %}">Funcionarios</a>
             <a href="{% url 'agendas_semana' %}" class="d-none d-md-inline-flex {% if ruta|slice:':7' == 'agendas' %}activo{% endif %}">Agendas</a>
             <a href="{% url 'agendas_ausencias' %}" class="d-none d-md-inline-flex {% if ruta == 'agendas_ausencias' %}activo{% endif %}">Ausencias</a>
+            <a href="{% url 'indicadores_lista' %}" class="d-none d-md-inline-flex {% if ruta == 'indicadores_lista' %}activo{% endif %}">Lista de espera</a>
             <a href="{% url 'personal_auditoria' %}" class="d-none d-md-inline-flex {% if ruta == 'personal_auditoria' %}activo{% endif %}">Actividad</a>
           {% endif %}
           {% if es_profesional %}
@@ -80,7 +85,7 @@
     {% block content %}{% endblock %}
   </main>
 
-  <footer class="pie">Prototipo académico · INACAP · Solo datos ficticios · <a href="{% url 'politica' %}">Privacidad</a></footer>
+  <footer class="pie">Prototipo académico · INACAP · Solo datos ficticios · <a href="{% url 'ayuda' %}">¿Cómo funciona?</a> · <a href="{% url 'politica' %}">Privacidad</a></footer>
 
   {% if user.is_authenticated %}
   <nav class="menu-inferior" aria-label="Menú del teléfono">
@@ -111,6 +116,7 @@
   {% endwith %}
 
   <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'js/pwa.js' %}?v=2" defer></script>{# ?v=: obliga al navegador a usar la versión nueva #}
   {% if user.is_authenticated %}
   <script>
     // DEF-03: si el navegador muestra una copia vieja al presionar "atras", se recarga
