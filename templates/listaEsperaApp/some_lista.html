@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}Lista de espera · SOME{% endblock %}
+{% block ancho_alertas %}medio{% endblock %}
+
+{% block content %}
+<div class="medio">
+  <a class="volver" href="{% url 'some_nomina' %}">{% include 'componentes/icono.html' with n='atras' %}Nómina</a>
+  <div class="etiqueta-seccion">Panel SOME</div>
+  <h1 class="mb-1">Lista de espera</h1>
+  <p class="texto-suave">Una sola fila por especialidad, en orden de llegada (app y ventanilla). Si alguien cancela con más de {{ reglas.horas_corto }} h de anticipación, el sistema ofrece la hora en orden; con menos, aparece abajo como <strong>cupo liberado de ventanilla</strong>.</p>
+
+  <nav class="pestanas flex-wrap" aria-label="Especialidad">
+    {% for e in especialidades %}
+      <a href="?especialidad={{ e.pk }}" {% if e.pk == especialidad.pk %}class="activa" aria-current="page"{% endif %}>{{ e.nombre }}</a>
+    {% endfor %}
+  </nav>
+
+  {% if especialidad %}
+  <form method="post" class="tarjeta p-3 mb-3" novalidate>{% csrf_token %}
+    <label class="form-label fw-semibold" for="id_rut">Inscribir en la lista de {{ especialidad }} (paciente en ventanilla)</label>
+    <div class="d-flex gap-2 flex-wrap">
+      <input type="text" name="rut" id="id_rut" class="form-control campo-rut flex-fill" placeholder="12.345.678-9" maxlength="12" style="max-width:18rem">
+      <button class="btn btn-verde">Inscribir</button>
+    </div>
+  </form>
+
+  <div class="tarjeta p-2 p-md-3">
+    <div class="table-responsive">
+    <table class="tabla-nomina">
+      <thead><tr><th>Lugar</th><th>Paciente</th><th>Inscrito</th><th>Estado</th><th></th></tr></thead>
+      <tbody>
+      {% for f in filas %}{% with e=f.espera p=f.espera.paciente %}
+        <tr>
+          <td class="hora-celda" data-rotulo="Lugar">{{ f.lugar }}°</td>
+          <td data-rotulo="Paciente"><strong>{{ p.usuario.get_full_name }}</strong>
+            <div class="small texto-suave">{{ p.usuario.rut }} · {{ p.sector.nombre|default:'Sin sector' }}{% if p.tutor %} · tutor: {{ p.tutor.get_full_name }}{% endif %}</div></td>
+          <td data-rotulo="Inscrito" class="small">{{ e.creado_en|date:"d-m-Y" }}<div class="texto-suave">{{ e.get_inscrito_por_display }}</div></td>
+          <td data-rotulo="Estado">
+            {% if f.oferta %}
+              <span class="estado estado-reservada">Cupo ofrecido</span>
+              <div class="small">{{ f.oferta.cupo.bloque.agenda.fecha|date:"d-m" }} {{ f.oferta.cupo.bloque.hora_inicio|time:"H:i" }} · responde hasta las {{ f.oferta.vence_en|time:"H:i" }}</div>
+            {% elif f.alerta %}
+              <span class="estado estado-reasignada">Llamar</span>
+              <div class="small">{{ e.ofertas_sin_respuesta }} ofertas seguidas sin respuesta</div>
+            {% else %}
+              <span class="texto-suave small">Esperando</span>
+            {% endif %}
+            {% if f.oferta or f.alerta %}<div class="small">{% include 'componentes/icono.html' with n='telefono' %} {{ p.usuario.telefono|default:'sin teléfono' }}</div>{% endif %}
+          </td>
+          <td>
+            <div class="acciones-fila">
+              {% if f.oferta %}
+                <form method="post" action="{% url 'some_oferta' f.oferta.pk 'aceptar' %}">{% csrf_token %}<button class="btn btn-verde" title="El paciente aceptó por teléfono">Aceptó por teléfono</button></form>
+                <form method="post" action="{% url 'some_oferta' f.oferta.pk 'rechazar' %}">{% csrf_token %}<button class="btn btn-borde">No puede</button></form>
+              {% endif %}
+              <form method="post" action="{% url 'some_quitar_lista' e.pk %}" onsubmit="return confirm('¿Sacar a {{ p.usuario.get_full_name|escapejs }} de la lista de espera?');">{% csrf_token %}<button class="btn btn-rojo-borde">Quitar</button></form>
+            </div>
+          </td>
+        </tr>
+      {% endwith %}{% empty %}
+        <tr><td colspan="5" class="text-center texto-suave">Nadie espera en {{ especialidad }}.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <h2 class="h4 mt-4 mb-1">Cupos liberados de ventanilla</h2>
+  <p class="texto-suave small">Horas canceladas con menos de {{ reglas.horas_corto }} h de aviso, o que nadie de la lista tomó a tiempo. Ya no se ven en la app: entrégalas a quien esté en el SOME o llama al primero de la fila. El tiempo de un No-Show también se usa aquí con un sobrecupo.</p>
+  {% for b in liberados %}
+    <div class="tarjeta d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div><strong>{{ b.agenda.fecha|date:"D d-m" }} · {{ b.hora_inicio|time:"H:i" }}</strong> · {{ b.agenda.especialidad }}
+        <div class="small texto-suave">{{ b.agenda.profesional.usuario.get_full_name }}</div></div>
+      <a class="btn btn-borde" href="{% url 'some_ventanilla' %}?fecha={{ b.agenda.fecha|date:'Y-m-d' }}&profesional={{ b.agenda.profesional.pk }}">Entregar en ventanilla</a>
+    </div>
+  {% empty %}
+    <div class="tarjeta text-center texto-suave">No hay cupos liberados pendientes.</div>
+  {% endfor %}
+</div>
+{% endblock %}

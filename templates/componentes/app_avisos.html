@@ -1,0 +1,23 @@
+{# B-14 · Panel "HoraSalud en tu teléfono": instalar la app y activar los avisos. Lo maneja static/js/pwa.js #}
+<div class="tarjeta panel-app" data-panel-app data-clave="{{ vapid_publica }}">
+  <div class="d-flex gap-3 align-items-start">
+    <span class="icono-caja">{% include 'componentes/icono.html' with n='telefono' %}</span>
+    <div class="flex-fill">
+      <strong>HoraSalud en tu teléfono</strong>
+      <p class="texto-suave small mb-2">Instálala como una app y activa los avisos: si se libera una hora para ti, tu teléfono sonará aunque la app esté cerrada.</p>
+
+      <div class="d-flex flex-wrap gap-2">
+        <button type="button" class="btn btn-verde" data-instalar hidden>{% include 'componentes/icono.html' with n='casa' %} Instalar HoraSalud</button>
+        <button type="button" class="btn btn-verde" data-avisos-activar hidden>{% include 'componentes/icono.html' with n='reloj' %} Activar avisos</button>
+        <button type="button" class="btn btn-borde" data-avisos-probar data-avisos-activos hidden>Probar aviso</button>
+      </div>
+
+      <p class="small mb-0 mt-2" data-instalada hidden>{% include 'componentes/icono.html' with n='check' %} Ya estás usando HoraSalud como app.</p>
+      <p class="small mb-0 mt-2 texto-ok" data-avisos-activos hidden>{% include 'componentes/icono.html' with n='check' %} Avisos activados en este teléfono.</p>
+      <p class="small mb-0 mt-2" data-iphone hidden>En iPhone: toca <strong>Compartir</strong> y luego <strong>Agregar a inicio</strong>. Después abre HoraSalud desde ese ícono para activar los avisos.</p>
+      <p class="small mb-0 mt-2" data-avisos-bloqueados hidden>Los avisos están bloqueados. Actívalos en los <strong>ajustes del navegador</strong> (Notificaciones → HoraSalud) o pide ayuda en el SOME.</p>
+      <p class="small mb-0 mt-2 texto-suave" data-avisos-no-disponible hidden>En este navegador no hay avisos. Igual verás el cupo ofrecido al entrar a HoraSalud.</p>
+      <p class="small mb-0 mt-2" data-avisos-mensaje role="status" aria-live="polite"></p>
+    </div>
+  </div>
+</div>

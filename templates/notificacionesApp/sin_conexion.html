@@ -1,0 +1,27 @@
+{% load static %}<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#1f7a3a">
+  <title>Sin conexión · HoraSalud</title>
+  <style>
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #f4f7f5; color: #1c2321;
+           font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; font-size: 18px; }
+    main { max-width: 26rem; padding: 2rem 1.5rem; text-align: center; }
+    .logo { width: 72px; height: 72px; border-radius: 18px; background: #1f7a3a; display: inline-grid; place-items: center; }
+    h1 { font-size: 1.5rem; margin: 1rem 0 .5rem; }
+    p { color: #55605c; }
+    button { min-height: 52px; padding: 0 1.5rem; border: 0; border-radius: 12px; background: #1f7a3a; color: #fff;
+             font-size: 1.05rem; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <main>
+    <span class="logo"><svg width="40" height="40" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M12 21s-8-4.8-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 6.2-8 11-8 11z"/></svg></span>
+    <h1>No hay conexión a internet</h1>
+    <p>HoraSalud necesita internet para mostrar tus horas. Revisa tu wifi o tus datos móviles e intenta de nuevo.</p>
+    <button type="button" onclick="location.reload()">Intentar de nuevo</button>
+  </main>
+</body>
+</html>

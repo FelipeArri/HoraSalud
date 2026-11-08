@@ -136,7 +136,9 @@ ACCIONES_HORAS = [RegistroAuditoria.Accion.RESERVA, RegistroAuditoria.Accion.CAN
                   RegistroAuditoria.Accion.NO_SHOW, RegistroAuditoria.Accion.ATENDIDA,
                   RegistroAuditoria.Accion.INGRESO_BLOQUEADO,  # DEF-07 y DEF-08
                   RegistroAuditoria.Accion.TUTOR_AUTORIZADO, RegistroAuditoria.Accion.TUTOR_REVOCADO,
-                  RegistroAuditoria.Accion.TUTOR_ACTUA]  # B-10
+                  RegistroAuditoria.Accion.TUTOR_ACTUA,  # B-10
+                  RegistroAuditoria.Accion.ESPERA_ALTA, RegistroAuditoria.Accion.ESPERA_BAJA,
+                  RegistroAuditoria.Accion.CUPO_ACEPTADO]  # B-14
 ROLES_PERSONAS = [Usuario.Tipo.PACIENTE.label, Usuario.Tipo.TUTOR.label]
 
 

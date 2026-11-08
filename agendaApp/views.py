@@ -17,7 +17,9 @@ from autenticacionApp.adapter_inscripcion import ServicioExternoNoDisponible
 from autenticacionApp.models import Paciente
 from autenticacionApp.sesion import requiere_paciente, requiere_some
 
-from . import gestion_agendas, prevision, servicios
+from listaEsperaApp import servicios as lista_espera
+
+from . import gestion_agendas, prevision, recordatorios, servicios
 from .estados_hora import TransicionInvalida
 from .models import Agenda, BloqueHorario, Especialidad, Hora
 
@@ -45,7 +47,16 @@ def mi_inicio(request):
         'cantidad_vigentes': vigentes.count(),
         'suspendidas': gestion_agendas.horas_suspendidas_sin_reagendar(request.paciente),  # B-21 · RN-13
         'indicaciones': gestion_agendas.indicaciones_pendientes(request.paciente),  # P-10
+        'ofertas': lista_espera.ofertas_pendientes(request.paciente),  # B-14: cupo ofrecido
+        'en_espera': request.paciente.esperas.count(),
+        'manana': recordatorios.recordatorio_de_manana(request.paciente),  # B-23
     })
+
+
+def ayuda(request):
+    """B-14: cómo funciona HoraSalud (lista de espera, avisos, instalar la app, tutor)."""
+    from listaEsperaApp.views import _reglas
+    return render(request, 'agendaApp/ayuda.html', {'reglas': _reglas()})
 
 
 @requiere_paciente
@@ -82,9 +93,13 @@ def pedir_bloque(request, especialidad_id):
         dia_elegido = None
     if dia_elegido not in dias:
         dia_elegido = next(iter(dias), None)
+    espera = request.paciente.esperas.filter(especialidad=especialidad).first()  # B-14
     return render(request, 'agendaApp/pedir_bloque.html', {
         'especialidad': especialidad, 'dias': list(dias), 'dia_elegido': dia_elegido,
         'bloques': dias.get(dia_elegido, []), 'paso': 2,
+        'espera': espera, 'lugar': lista_espera.posicion(espera) if espera else None,
+        'tiene_hora': servicios.horas_vigentes(request.paciente).filter(
+            bloque__agenda__especialidad=especialidad).exists(),
     })
 
 
@@ -218,6 +233,8 @@ def some_no_vigentes(request):
                  .select_related('usuario', 'sector').order_by('usuario__last_name'))
     # El motivo va cifrado (no se puede filtrar); las cancelaciones por RN-16 son las que generaron un aviso
     from notificacionesApp.models import RegistroNotificacion
-    filas = [{'paciente': p, 'canceladas': RegistroNotificacion.objects.filter(hora__paciente=p).count()}
-             for p in pacientes]
+    # Horas canceladas distintas (B-23: una hora también puede tener su recordatorio registrado)
+    filas = [{'paciente': p, 'canceladas': RegistroNotificacion.objects.filter(
+        hora__paciente=p, hora__estado=Hora.Estado.CANCELADA).values('hora').distinct().count()}
+        for p in pacientes]
     return render(request, 'agendaApp/some_no_vigentes.html', {'filas': filas})

@@ -207,6 +207,10 @@ class RegistroAuditoria(models.Model):
         TUTOR_ACTUA = 'tutor_actua', 'Tutor eligió actuar por un paciente'
         # Trazabilidad de sesiones de todos los roles
         SALIDA = 'salida', 'Cerró sesión'
+        # B-14 · lista de espera (RF-06)
+        ESPERA_ALTA = 'espera_alta', 'Inscribió en lista de espera'
+        ESPERA_BAJA = 'espera_baja', 'Sacó de la lista de espera'
+        CUPO_ACEPTADO = 'cupo_aceptado', 'Aceptó un cupo de la lista de espera'
 
     fecha = models.DateTimeField(auto_now_add=True)
     actor = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')

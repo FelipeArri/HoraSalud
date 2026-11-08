@@ -15,6 +15,7 @@ from autenticacionApp.personal import auditar
 from proyectoHoraSalud.configuracion_sistema import ConfiguracionSistema
 
 from .estados_hora import TransicionInvalida
+from .eventos import cupo_liberado
 from .models import BloqueHorario, Hora
 
 ESTADOS_VIGENTES = [Hora.Estado.RESERVADA, Hora.Estado.CONFIRMADA]
@@ -128,6 +129,7 @@ def cancelar_hora(hora, motivo, quien='Paciente', request=None):
     hora.save()
     auditar(request, RegistroAuditoria.Accion.CANCELACION, objetivo=hora.paciente.usuario,
             detalle=f'{quien} · {_detalle_hora(hora)}')  # DEF-07 (RN-11); el motivo va cifrado, no se copia
+    cupo_liberado.send(sender=Hora, bloque=hora.bloque, motivo='cancelacion')  # B-14 (Observer)
     return hora
 
 

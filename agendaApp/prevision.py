@@ -25,6 +25,7 @@ from autenticacionApp.models import Paciente, RegistroAuditoria
 from autenticacionApp.personal import auditar
 from notificacionesApp.models import RegistroNotificacion
 
+from .eventos import cupo_liberado
 from .models import Hora
 
 VIGENCIA_CONSULTA = timedelta(days=30)
@@ -66,6 +67,7 @@ def dejar_no_vigente(paciente, prevision):
         auditar(None, RegistroAuditoria.Accion.CANCELACION, objetivo=paciente.usuario,
                 detalle=f'Sistema (RN-16) · {hora.bloque.agenda.especialidad} · '
                         f'{hora.bloque.agenda.fecha:%d-%m-%Y} {hora.bloque.hora_inicio:%H:%M}')  # DEF-07
+        cupo_liberado.send(sender=Hora, bloque=hora.bloque, motivo='cancelacion')  # B-14 (Observer)
         canceladas += 1
     return canceladas
 

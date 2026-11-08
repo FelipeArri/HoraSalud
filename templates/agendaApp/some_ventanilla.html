@@ -50,7 +50,7 @@
             <form method="post" class="d-flex flex-wrap gap-2 mb-3">{% csrf_token %}
               {% for b in datos.bloques %}
                 <button name="bloque" value="{{ b.pk }}" class="btn btn-borde btn-sm" title="{{ b.get_tipo_cupo_display }}">
-                  {{ b.hora_inicio|time:"H:i" }}{% if b.tipo_cupo == 'morbilidad' %} · morbilidad{% endif %}
+                  {{ b.hora_inicio|time:"H:i" }}{% if b.tipo_cupo == 'morbilidad' %} · morbilidad{% elif b.tipo_cupo == 'liberado' %} · liberado{% endif %}
                 </button>
               {% endfor %}
             </form>
