@@ -33,6 +33,15 @@
   </a>
   {% endfor %}
 
+  {% if manana %}{# B-23: recordatorio también dentro de la app #}
+  <div class="alert alert-info d-flex gap-2 align-items-start" role="alert">
+    {% include 'componentes/icono.html' with n='reloj' %}
+    <div><strong>Mañana tienes hora a las {{ manana.bloque.hora_inicio|time:"H:i" }}.</strong>
+      {% if manana.estado == 'reservada' %}Confírmala si vas a ir, o cancélala para que otra persona la use.{% else %}Si no puedes ir, cancélala para que otra persona la use.{% endif %}
+      <a href="{% url 'mis_horas' %}" class="fw-semibold">Ver mis horas</a></div>
+  </div>
+  {% endif %}
+
   {% for h in suspendidas %}
   <div class="alert alert-danger d-flex gap-2 align-items-start" role="alert">
     {% include 'componentes/icono.html' with n='calendario' %}

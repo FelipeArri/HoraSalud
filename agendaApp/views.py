@@ -19,7 +19,7 @@ from autenticacionApp.sesion import requiere_paciente, requiere_some
 
 from listaEsperaApp import servicios as lista_espera
 
-from . import gestion_agendas, prevision, servicios
+from . import gestion_agendas, prevision, recordatorios, servicios
 from .estados_hora import TransicionInvalida
 from .models import Agenda, BloqueHorario, Especialidad, Hora
 
@@ -49,6 +49,7 @@ def mi_inicio(request):
         'indicaciones': gestion_agendas.indicaciones_pendientes(request.paciente),  # P-10
         'ofertas': lista_espera.ofertas_pendientes(request.paciente),  # B-14: cupo ofrecido
         'en_espera': request.paciente.esperas.count(),
+        'manana': recordatorios.recordatorio_de_manana(request.paciente),  # B-23
     })
 
 
@@ -232,6 +233,8 @@ def some_no_vigentes(request):
                  .select_related('usuario', 'sector').order_by('usuario__last_name'))
     # El motivo va cifrado (no se puede filtrar); las cancelaciones por RN-16 son las que generaron un aviso
     from notificacionesApp.models import RegistroNotificacion
-    filas = [{'paciente': p, 'canceladas': RegistroNotificacion.objects.filter(hora__paciente=p).count()}
-             for p in pacientes]
+    # Horas canceladas distintas (B-23: una hora también puede tener su recordatorio registrado)
+    filas = [{'paciente': p, 'canceladas': RegistroNotificacion.objects.filter(
+        hora__paciente=p, hora__estado=Hora.Estado.CANCELADA).values('hora').distinct().count()}
+        for p in pacientes]
     return render(request, 'agendaApp/some_no_vigentes.html', {'filas': filas})

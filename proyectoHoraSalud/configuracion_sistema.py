@@ -33,4 +33,7 @@ class ConfiguracionSistema:
             # Despues de esta cantidad de ofertas seguidas sin respuesta, el SOME ve una
             # marca para llamar al paciente. El paciente NO pierde su lugar.
             cls._instancia.ofertas_sin_respuesta_alerta = 3
+            # ---- B-23: recordatorio de la hora (aviso push o dentro de la app) ----
+            # Se envía el día anterior, dentro del mismo horario de avisos (08:00 a 20:00).
+            cls._instancia.recordatorio_dias_antes = 1
         return cls._instancia

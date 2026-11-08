@@ -195,8 +195,9 @@ HORASALUD_INGRESO_DEMO = DEBUG and os.getenv('HORASALUD_INGRESO_DEMO', 'True') =
 VAPID_PUBLIC_KEY = os.getenv('VAPID_PUBLIC_KEY', '')
 VAPID_PRIVATE_KEY = os.getenv('VAPID_PRIVATE_KEY', '')
 VAPID_CONTACTO = os.getenv('VAPID_CONTACTO', 'mailto:contacto@horasalud.cl')
-# B-14: la lista de espera revisa plazos vencidos al recibir visitas (como máximo cada 30 s).
-# En el servidor real, además, se deja corriendo: python manage.py procesar_lista_espera --cada 60
+# B-14 y B-23: con las visitas (como máximo cada 30 s) se vencen las ofertas de la lista de espera
+# y se envían los recordatorios de mañana. En el servidor real, además, se deja corriendo:
+#   python manage.py tareas_horasalud --cada 60
 HORASALUD_LISTA_ESPERA_AUTOMATICA = True
 
 X_FRAME_OPTIONS = 'DENY'

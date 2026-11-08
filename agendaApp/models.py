@@ -94,6 +94,8 @@ class Hora(models.Model):
     ESTADOS_SIN_BLOQUE = (Estado.CANCELADA, Estado.SUSPENDIDA)  # dejan de ocupar el bloque
     motivo_cancelacion = CampoCifrado(blank=True, largo_maximo=200)  # cifrado en reposo (B-07)
     creado_en = models.DateTimeField(auto_now_add=True)
+    # B-23: cuándo se avisó "mañana tienes hora" (así nunca se envía dos veces)
+    recordatorio_enviado_en = models.DateTimeField(null=True, blank=True, editable=False)
 
     class Meta:
         ordering = ['bloque__agenda__fecha', 'bloque__hora_inicio']

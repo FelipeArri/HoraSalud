@@ -89,24 +89,25 @@ class RepositorioPacientes:
 CANALES = {PushStrategy: RegistroNotificacion.Canal.PUSH, AvisoEnAppStrategy: RegistroNotificacion.Canal.APP}
 
 
-def _registrar(paciente, canal, entregado, mensaje):
+def _registrar(paciente, canal, entregado, mensaje, hora=None):
     estado = RegistroNotificacion.Estado.ENVIADA if entregado else RegistroNotificacion.Estado.FALLIDA
-    return RegistroNotificacion.objects.create(paciente=paciente, canal=canal, estado=estado,
+    return RegistroNotificacion.objects.create(paciente=paciente, hora=hora, canal=canal, estado=estado,
                                                mensaje=mensaje[:200], enviado_en=timezone.now())
 
 
-def avisar(paciente, mensaje, url='/lista-espera/', ttl=600):
+def avisar(paciente, mensaje, url='/lista-espera/', ttl=600, hora=None):
     """Envía el aviso por el canal que corresponda (gratis) y lo deja registrado. Devuelve el registro."""
     factory = NotificacionFactory(RepositorioPacientes(), PushGateway(url, ttl))
-    notificacion = factory.crear_notificacion(paciente_id=paciente.pk, hora_id=None, mensaje=mensaje)
+    notificacion = factory.crear_notificacion(paciente_id=paciente.pk, hora_id=getattr(hora, 'pk', None),
+                                              mensaje=mensaje)
     try:
         entregado = notificacion.enviar()
     except Exception as error:
         logger.warning('No se pudo enviar el aviso: %s', error)
         entregado = False
-    registro = _registrar(paciente, CANALES[type(notificacion.estrategia)], entregado, mensaje)
+    registro = _registrar(paciente, CANALES[type(notificacion.estrategia)], entregado, mensaje, hora)
     if not entregado:
         # Respaldo: si el push no llegó, el aviso igual queda visible dentro de HoraSalud
         registro = _registrar(paciente, RegistroNotificacion.Canal.APP, AvisoEnAppStrategy().enviar(mensaje, {}),
-                              mensaje)
+                              mensaje, hora)
     return registro

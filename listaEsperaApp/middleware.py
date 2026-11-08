@@ -1,9 +1,9 @@
 """
-B-14 · Revisa los plazos de la lista de espera sin necesidad de un programa aparte.
+B-14 y B-23 · Ejecuta las tareas automáticas sin necesidad de un programa aparte.
 
-Con cada visita (como máximo una vez cada 30 segundos) vence las ofertas sin
-respuesta y ofrece el cupo al siguiente. En un servidor real se deja además
-corriendo "python manage.py procesar_lista_espera --cada 60".
+Con cada visita (como máximo una vez cada 30 segundos) vence las ofertas de la
+lista de espera y envía los recordatorios de mañana (proyectoHoraSalud.tareas).
+En un servidor real se deja además corriendo "python manage.py tareas_horasalud --cada 60".
 """
 import logging
 
@@ -23,8 +23,8 @@ class ProcesarListaEsperaMiddleware:
                 and not request.path.startswith(('/static/', '/sw.js', '/manifest', '/favicon'))
                 and cache.add(CLAVE, 1, 30)):
             try:
-                from .servicios import procesar
-                procesar()
+                from proyectoHoraSalud.tareas import ejecutar
+                ejecutar()
             except Exception:  # nunca debe impedir que la página cargue
-                logger.exception('No se pudo revisar la lista de espera')
+                logger.exception('No se pudieron ejecutar las tareas automáticas')
         return self.get_response(request)
