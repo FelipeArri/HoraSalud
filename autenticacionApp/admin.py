@@ -74,9 +74,9 @@ class SolicitudDerechosAdmin(admin.ModelAdmin):
 @admin.register(RegistroAuditoria)
 class RegistroAuditoriaAdmin(admin.ModelAdmin):
     """B-20 · RN-11: solo lectura."""
-    list_display = ('fecha', 'actor_rut', 'accion', 'objetivo_rut', 'detalle', 'ip')
-    list_filter = ('accion',)
-    search_fields = ('actor_rut', 'objetivo_rut')
+    list_display = ('fecha', 'actor_rol', 'actor_rut', 'accion', 'objetivo_rol', 'objetivo_rut', 'descripcion', 'ip')
+    list_filter = ('accion', 'actor_rol')
+    search_fields = ('actor_rut', 'objetivo_rut', 'descripcion')
 
     def has_add_permission(self, request):
         return False

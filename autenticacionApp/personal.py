@@ -14,6 +14,7 @@ from django.contrib.auth import logout
 from django.db import transaction
 from django.utils import timezone
 
+from .auditoria_texto import armar_descripcion
 from .models import Profesional, RegistroAuditoria, Usuario
 
 MAX_INTENTOS_INGRESO = 5
@@ -31,12 +32,23 @@ def _ip(request):
     return request.META.get('REMOTE_ADDR') if request else None
 
 
+def _rol(usuario):
+    return usuario.get_tipo_usuario_display() if usuario else ''
+
+
 def auditar(request, accion, actor=None, objetivo=None, detalle=''):
+    """Guarda quién (con su rol), qué, sobre quién y una descripción legible (RN-11)."""
     actor = actor or (request.user if request and request.user.is_authenticated else None)
+    actor_rut, objetivo_rut = getattr(actor, 'rut', '') or '', getattr(objetivo, 'rut', '') or ''
+    detalle = detalle[:200]
+    descripcion = armar_descripcion(
+        RegistroAuditoria.Accion(accion).label,
+        _rol(actor), actor.get_full_name() if actor else '', actor_rut,
+        _rol(objetivo), objetivo.get_full_name() if objetivo else '', objetivo_rut, detalle)
     return RegistroAuditoria.objects.create(
-        actor=actor, actor_rut=getattr(actor, 'rut', '') or '', accion=accion,
-        objetivo=objetivo, objetivo_rut=getattr(objetivo, 'rut', '') or '',
-        detalle=detalle[:200], ip=_ip(request))
+        actor=actor, actor_rut=actor_rut, actor_rol=_rol(actor), accion=accion,
+        objetivo=objetivo, objetivo_rut=objetivo_rut, objetivo_rol=_rol(objetivo),
+        detalle=detalle, descripcion=descripcion, ip=_ip(request))
 
 
 def generar_clave(largo=12):

@@ -204,14 +204,22 @@ class RegistroAuditoria(models.Model):
         # B-10 · vínculo de tutor (RF-03)
         TUTOR_AUTORIZADO = 'tutor_autorizado', 'Autorizó un tutor'
         TUTOR_REVOCADO = 'tutor_revocado', 'Quitó un tutor'
+        TUTOR_ACTUA = 'tutor_actua', 'Tutor eligió actuar por un paciente'
+        # Trazabilidad de sesiones de todos los roles
+        SALIDA = 'salida', 'Cerró sesión'
 
     fecha = models.DateTimeField(auto_now_add=True)
     actor = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
     actor_rut = models.CharField('RUT de quien actúa', max_length=12, blank=True)
+    # Rol al momento del evento (se guarda como texto: si después cambia, el registro no cambia)
+    actor_rol = models.CharField('rol de quien actúa', max_length=30, blank=True)
     accion = models.CharField(max_length=20, choices=Accion.choices)
     objetivo = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
     objetivo_rut = models.CharField('RUT afectado', max_length=12, blank=True)
+    objetivo_rol = models.CharField('rol de la persona afectada', max_length=30, blank=True)
     detalle = models.CharField(max_length=200, blank=True)
+    # Frase completa: quién (rol, nombre, RUT), qué hizo, sobre quién y el detalle
+    descripcion = models.CharField('descripción', max_length=400, blank=True)
     ip = models.GenericIPAddressField(null=True, blank=True)
 
     class Meta:
