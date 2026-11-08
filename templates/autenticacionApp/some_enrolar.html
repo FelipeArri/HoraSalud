@@ -42,7 +42,9 @@
           </div>
         </div>
 
-        {% if consulta.es_tutor %}
+        {% if consulta.servicio_caido %}
+          <div class="fila-chequeo aviso">{% include 'componentes/icono.html' with n='reloj' %}<span><strong>Sin respuesta:</strong> no se pudo confirmar la inscripción ni la previsión.</span></div>
+        {% elif consulta.es_tutor %}
           <div class="fila-chequeo ok">{% include 'componentes/icono.html' with n='check' %}<span><strong>Tutor o cuidador</strong> registrado en HoraSalud: no requiere inscripción ni FONASA.</span></div>
         {% else %}
           <div class="fila-chequeo {% if consulta.inscripcion.inscrito %}ok{% else %}mal{% endif %}">

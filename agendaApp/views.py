@@ -13,6 +13,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from autenticacionApp.adapter_inscripcion import ServicioExternoNoDisponible
 from autenticacionApp.models import Paciente
 from autenticacionApp.sesion import requiere_paciente, requiere_some
 
@@ -203,7 +204,12 @@ def some_no_vigentes(request):
     if request.method == 'POST':
         paciente = get_object_or_404(Paciente, pk=request.POST.get('paciente'),
                                      estado_inscripcion=Paciente.Estado.NO_VIGENTE)
-        if prevision.reactivar(paciente):
+        try:
+            reactivado = prevision.reactivar(paciente)
+        except ServicioExternoNoDisponible as error:  # DEF-09
+            messages.error(request, f'{error} {paciente.usuario.get_full_name()} sigue como No vigente.')
+            return redirect('some_no_vigentes')
+        if reactivado:
             messages.success(request, f'{paciente.usuario.get_full_name()} volvió a FONASA: quedó vigente y ya puede pedir horas.')
         else:
             messages.error(request, f'{paciente.usuario.get_full_name()} sigue con {paciente.get_prevision_display()}: no se puede reactivar.')

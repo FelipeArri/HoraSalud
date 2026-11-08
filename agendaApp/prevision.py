@@ -20,7 +20,7 @@ from datetime import timedelta
 from django.db import transaction
 from django.utils import timezone
 
-from autenticacionApp.adapter_inscripcion import PrevisionService, servicios_externos
+from autenticacionApp.adapter_inscripcion import PrevisionService, ServicioExternoNoDisponible, servicios_externos
 from autenticacionApp.models import Paciente, RegistroAuditoria
 from autenticacionApp.personal import auditar
 from notificacionesApp.models import RegistroNotificacion
@@ -77,7 +77,12 @@ def revalidar(paciente, servicios=None, forzar=False):
     if not forzar and not consulta_vencida(paciente):
         return Resultado(consultado=False)
     _, fonasa = servicios or servicios_externos()
-    datos = fonasa.consultar_prevision(paciente.usuario.rut)
+    try:
+        datos = fonasa.consultar_prevision(paciente.usuario.rut)
+    except ServicioExternoNoDisponible:
+        # DEF-09: FONASA caído no deja al paciente sin atención. Se mantiene el último estado conocido
+        # (vigente) y no se actualiza la fecha, para volver a consultar en la próxima reserva.
+        return Resultado(consultado=False)
     paciente.prevision_consultada_en = timezone.now()
     if datos['prevision'] == PrevisionService.FONASA:
         paciente.tramo = datos['tramo']
