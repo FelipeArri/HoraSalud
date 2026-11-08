@@ -45,6 +45,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'proyectoHoraSalud.middleware.SinCacheParaSesionMiddleware',  # DEF-03
+    'proyectoHoraSalud.middleware.CabecerasSegurasApiMiddleware',  # DEF-10 (CP-31)
 ]
 
 ROOT_URLCONF = 'proyectoHoraSalud.urls'

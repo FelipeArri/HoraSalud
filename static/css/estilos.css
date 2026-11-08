@@ -122,7 +122,9 @@ a.tarjeta-accion:hover { transform: translateY(-2px); box-shadow: var(--sombra-a
 
 /* ---------- Portada ---------- */
 .portada {
-  background: linear-gradient(135deg, var(--verde) 0%, #2f9a52 60%, #46b06a 100%);
+  /* DEF-11 (CP-38): el degradado aclaraba hasta #46b06a (2,7:1 con texto blanco). Ahora el tono
+     más claro es el verde de la marca: mínimo 4,5:1 incluso bajo el círculo decorativo. */
+  background: linear-gradient(135deg, #145a2b 0%, #1b6a33 55%, var(--verde) 100%);
   color: #fff; border-radius: 22px; padding: 2rem 1.5rem; position: relative; overflow: hidden;
 }
 .portada::after {
@@ -221,6 +223,7 @@ a.tarjeta-accion:hover { transform: translateY(-2px); box-shadow: var(--sombra-a
   background: var(--ambar-suave); border: 1px dashed #e0b44c; color: var(--ambar); border-radius: 12px;
   padding: .7rem 1rem; font-size: .92rem;
 }
+.aviso-demo code { color: inherit; font-weight: 600; }  /* DEF-11 (CP-38): el rosado de Bootstrap daba 4,1:1 */
 
 /* ---------- Huella (verificación) ---------- */
 .huella {
