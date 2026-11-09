@@ -55,6 +55,7 @@ class IngresoQuedaRegistradoTests(TestCase):
         self.assertEqual(salida.actor, paciente)
         self.assertIn('Cerró sesión', salida.descripcion)
 
+    @override_settings(HORASALUD_MFA_PERSONAL=False)  # primer factor; el MFA en test_mfa_personal.py
     def test_ingreso_del_personal_dice_su_rol(self):
         some = Usuario.objects.get(tipo_usuario=Usuario.Tipo.ADMINISTRATIVO)
         some.set_password(CLAVE)

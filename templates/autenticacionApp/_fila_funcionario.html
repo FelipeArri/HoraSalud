@@ -14,6 +14,7 @@
     {% if f.pk != user.pk %}
       {% if f.is_active %}
         <a class="btn btn-borde btn-sm" href="{% url 'personal_funcionario_accion' f.pk 'clave' %}">Clave temporal</a>
+        {% if f.passkeys.exists %}<a class="btn btn-borde btn-sm" href="{% url 'personal_funcionario_accion' f.pk 'dispositivos' %}">Quitar 2.º factor</a>{% endif %}
         <a class="btn btn-borde btn-sm" href="{% url 'personal_funcionario_accion' f.pk 'desactivar' %}">Desactivar</a>
       {% else %}
         <a class="btn btn-borde btn-sm" href="{% url 'personal_funcionario_accion' f.pk 'reactivar' %}">Reactivar</a>

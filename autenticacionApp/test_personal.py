@@ -15,6 +15,8 @@ from .models import Profesional, RegistroAuditoria, Sector, Usuario
 Accion = RegistroAuditoria.Accion
 
 
+# Estas pruebas revisan el primer factor (RUT + clave). El segundo factor (CC-19) está en test_mfa_personal.py
+@override_settings(HORASALUD_MFA_PERSONAL=False)
 class PersonalBase(TestCase):
     databases = {'default', 'fonasa'}
 
