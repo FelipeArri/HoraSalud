@@ -1,7 +1,8 @@
 """
 B-20 · Personal del CESFAM: ingreso con RUT + clave, administrador CESFAM y auditoría (RN-11).
 
-- El personal (SOME, profesionales y Administrador CESFAM) entra con RUT + clave.
+- El personal (SOME, profesionales y Administrador CESFAM) entra con RUT + clave
+  y luego confirma con su passkey (segundo factor, CC-19: ver segundo_factor.py).
 - 5 claves incorrectas seguidas bloquean la cuenta 15 minutos (OWASP A07).
 - Para agregar, desactivar o dar clave temporal, el administrador vuelve a escribir
   SU clave. Si se equivoca 3 veces, se le cierra la sesión.
@@ -181,3 +182,11 @@ def horas_futuras_del_profesional(funcionario):
     return Hora.objects.filter(bloque__agenda__profesional__usuario=funcionario,
                                bloque__agenda__fecha__gte=timezone.localdate(),
                                estado__in=[Hora.Estado.RESERVADA, Hora.Estado.CONFIRMADA]).count()
+
+
+def quitar_dispositivos(request, funcionario, motivo=''):
+    """CC-19: teléfono o PC perdido. Borra sus passkeys; con una clave temporal registra uno nuevo."""
+    cantidad, _ = funcionario.passkeys.all().delete()
+    auditar(request, RegistroAuditoria.Accion.MFA_QUITADO, objetivo=funcionario,
+            detalle=(motivo or f'{cantidad} dispositivo(s)'))
+    return cantidad

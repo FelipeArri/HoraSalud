@@ -56,6 +56,7 @@ class Command(BaseCommand):
             usuario.debe_cambiar_clave = False  # cuentas de prueba: entran directo con la clave del Excel
             usuario.intentos_fallidos = 0
             usuario.bloqueado_hasta = None
+            usuario.last_login = None  # CC-19: con esta clave nueva puede registrar su segundo factor
             usuario.save()
             prof = getattr(usuario, 'profesional', None)
             detalle = notas.get(usuario.username) or (str(prof.especialidad) if prof and prof.especialidad else '')
