@@ -5,6 +5,7 @@ Todas las credenciales se leen del archivo .env, que nunca se sube a Git
 (RNF-SEC02). Ver .env.example para la lista de variables.
 """
 import os
+import sys
 from datetime import timedelta
 from pathlib import Path
 
@@ -38,6 +39,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # B-16: estilos e imágenes sin depender de DEBUG
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -133,6 +135,13 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+# B-16: en producción whitenoise sirve los archivos estáticos comprimidos y con versión en el nombre
+# (el navegador nunca usa una copia vieja). En desarrollo y en las pruebas se usa lo normal de Django.
+if not DEBUG and 'test' not in sys.argv:
+    STORAGES = {
+        'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+        'staticfiles': {'BACKEND': 'proyectoHoraSalud.almacen_estaticos.AlmacenEstaticos'},
+    }
 REPORTES_DIR = BASE_DIR / 'reportes'  # Excel generados (fuera de Git)  # destino de collectstatic (D33-C07)
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

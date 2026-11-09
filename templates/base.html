@@ -116,7 +116,7 @@
   {% endwith %}
 
   <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-  <script src="{% static 'js/pwa.js' %}?v=2" defer></script>{# ?v=: obliga al navegador a usar la versión nueva #}
+  <script src="{% static 'js/pwa.js' %}" defer></script>
   {% if user.is_authenticated %}
   <script>
     // DEF-03: si el navegador muestra una copia vieja al presionar "atras", se recarga
