@@ -4,6 +4,7 @@ from . import views, views_agendas as agendas
 
 urlpatterns = [
     path('mi-inicio/', views.mi_inicio, name='mi_inicio'),
+    path('ayuda/', views.ayuda, name='ayuda'),  # B-14: cómo funciona HoraSalud
     path('pedir-hora/', views.pedir_especialidad, name='pedir_especialidad'),
     path('pedir-hora/<int:especialidad_id>/', views.pedir_bloque, name='pedir_bloque'),
     path('pedir-hora/bloque/<int:bloque_id>/', views.pedir_confirmar, name='pedir_confirmar'),

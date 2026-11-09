@@ -7,7 +7,7 @@
 <div class="medio">
   <div class="etiqueta-seccion">Privacidad</div>
   <h1 class="mb-1">Mis datos</h1>
-  <p class="texto-suave mb-3">Lo que HoraSalud guarda de ti y lo que puedes hacer con ello (Ley 21.719).</p>
+  <p class="texto-suave mb-3">Lo que HoraSalud guarda de ti y lo que puedes hacer con ello (Ley 19.628; preparado para la Ley 21.719).</p>
 
   <div class="tarjeta">
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
@@ -24,6 +24,55 @@
     </dl>
     <p class="texto-suave small mb-0">¿Algún dato está mal? Pide corregirlo más abajo.</p>
   </div>
+
+  {% if paciente and user.tipo_usuario == 'paciente' %}
+  <div class="tarjeta" id="mi-tutor">
+    <h2 class="h5">Mi tutor o cuidador</h2>
+    {% if paciente.tutor %}
+      <p class="mb-2"><strong>{{ paciente.tutor.get_full_name }}</strong> · RUT {{ paciente.tutor.rut }}</p>
+      <p class="texto-suave small">Puede pedir y cancelar horas por ti.
+        {% if not paciente.tutor.passkeys.exists %}Aún no activa su huella: debe hacerlo en el SOME con su cédula.{% endif %}</p>
+      <form method="post" action="{% url 'quitar_tutor' %}" onsubmit="return confirm('¿Quitar a tu tutor? Ya no podrá pedir ni cancelar horas por ti.');">
+        {% csrf_token %}<button class="btn btn-rojo-borde w-100">Quitar a mi tutor</button>
+      </form>
+    {% else %}
+      <p class="texto-suave small">Si alguien te ayuda con tus horas (un familiar o cuidador), autorízalo aquí. Podrás quitarlo cuando quieras.</p>
+      <form method="post" action="{% url 'autorizar_tutor' %}" novalidate>
+        {% csrf_token %}
+        {% for error in tutor_form.non_field_errors %}<div class="alert alert-warning py-2" role="alert">{{ error }}</div>{% endfor %}
+        <label for="{{ tutor_form.rut.id_for_label }}" class="form-label fw-semibold">{{ tutor_form.rut.label }}</label>
+        {{ tutor_form.rut }}
+        {% for error in tutor_form.rut.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+        <div class="row g-2 mt-1">
+          <div class="col-sm-6">
+            <label for="{{ tutor_form.nombres.id_for_label }}" class="form-label fw-semibold">Nombres</label>
+            {{ tutor_form.nombres }}
+          </div>
+          <div class="col-sm-6">
+            <label for="{{ tutor_form.apellidos.id_for_label }}" class="form-label fw-semibold">Apellidos</label>
+            {{ tutor_form.apellidos }}
+          </div>
+        </div>
+        <p class="texto-suave small mt-1 mb-2">Si tu tutor ya usa HoraSalud, basta con el RUT.</p>
+        <label class="opcion"><input type="checkbox" name="confirmo" required {% if tutor_form.confirmo.value %}checked{% endif %}> <span>{{ tutor_form.confirmo.label }}</span></label>
+        {% for error in tutor_form.confirmo.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+        <button type="submit" class="btn btn-verde w-100 mt-2">Autorizar tutor</button>
+      </form>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if a_cargo is not None %}
+  <div class="tarjeta">
+    <h2 class="h5">Personas a mi cargo</h2>
+    {% for p in a_cargo %}
+      <p class="mb-1"><strong>{{ p.usuario.get_full_name }}</strong> · RUT {{ p.usuario.rut }}</p>
+    {% empty %}
+      <p class="texto-suave mb-0">Nadie te ha autorizado como tutor todavía.</p>
+    {% endfor %}
+    <p class="texto-suave small mt-2 mb-0">El paciente o el SOME pueden quitar este permiso cuando quieran.</p>
+  </div>
+  {% endif %}
 
   <div class="tarjeta">
     <h2 class="h5">Dispositivos con los que entras</h2>

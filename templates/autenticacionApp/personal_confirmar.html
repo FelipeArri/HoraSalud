@@ -18,6 +18,9 @@
       {% endif %}
     {% elif accion == 'clave' %}
       <p class="texto-suave">Se reemplaza su clave por una temporal (también desbloquea la cuenta). Deberá cambiarla al ingresar.</p>
+    {% elif accion == 'dispositivos' %}
+      <p class="texto-suave">Úsalo si perdió su teléfono o cambió de PC. Se borran sus passkeys (segundo factor) y
+        no podrá entrar hasta registrar un dispositivo nuevo con una clave temporal que le entregas en persona.</p>
     {% endif %}
 
     <form method="post" novalidate>

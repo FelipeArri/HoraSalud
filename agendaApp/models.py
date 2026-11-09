@@ -44,12 +44,15 @@ class BloqueHorario(models.Model):
         DISPONIBLE = 'disponible', 'Disponible'
         RESERVADO = 'reservado', 'Reservado'
         BLOQUEADO = 'bloqueado', 'Bloqueado'
+        EN_OFERTA = 'en_oferta', 'Ofrecido a la lista de espera'  # B-14: retenido mientras se ofrece
 
     class TipoCupo(models.TextChoices):
         # B-21 (P-07): solo los "programados" se ven en la app del paciente
         PROGRAMADO = 'programado', 'Programado (app)'
         MORBILIDAD = 'morbilidad', 'Morbilidad del día (ventanilla)'
         SOBRECUPO = 'sobrecupo', 'Sobrecupo (ventanilla)'
+        # B-14 (RN-17): hora cancelada con menos de 24 h de aviso; ya no se ve en la app
+        LIBERADO = 'liberado', 'Cupo liberado (ventanilla)'
 
     agenda = models.ForeignKey(Agenda, on_delete=models.CASCADE, related_name='bloques')
     hora_inicio = models.TimeField()
@@ -91,6 +94,8 @@ class Hora(models.Model):
     ESTADOS_SIN_BLOQUE = (Estado.CANCELADA, Estado.SUSPENDIDA)  # dejan de ocupar el bloque
     motivo_cancelacion = CampoCifrado(blank=True, largo_maximo=200)  # cifrado en reposo (B-07)
     creado_en = models.DateTimeField(auto_now_add=True)
+    # B-23: cuándo se avisó "mañana tienes hora" (así nunca se envía dos veces)
+    recordatorio_enviado_en = models.DateTimeField(null=True, blank=True, editable=False)
 
     class Meta:
         ordering = ['bloque__agenda__fecha', 'bloque__hora_inicio']

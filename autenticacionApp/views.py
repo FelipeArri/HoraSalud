@@ -16,9 +16,10 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from . import inscripcion, passkeys, privacidad
+from . import inscripcion, limite_intentos, passkeys, privacidad
 from .forms import EnrolamientoForm, IngresoRutForm
-from .models import CodigoEnrolamiento, Usuario
+from .models import CodigoEnrolamiento, RegistroAuditoria, Usuario
+from .personal import auditar
 from .sesion import CLAVE_PACIENTE, es_some, pacientes_a_cargo, requiere_some
 
 CLAVE_RUT_PENDIENTE = 'rut_pendiente'
@@ -38,10 +39,19 @@ def _destino(usuario):
     return 'mi_inicio'
 
 
-def _iniciar_sesion(request, usuario):
+METODO_PASSKEY = 'Entró con huella, rostro o PIN del dispositivo (passkey)'
+METODO_DEMO = 'Entró SIN huella en modo demostración (solo en el equipo local)'
+METODO_ENROLAMIENTO = 'Entró al activar su huella con el código del SOME'
+METODO_CLAVE = 'Entró con RUT y clave'
+
+
+def _iniciar_sesion(request, usuario, metodo=''):
+    """Abre la sesión. Si se indica el método, el ingreso queda en la auditoría (RN-11)."""
     request.session.pop(CLAVE_RUT_PENDIENTE, None)
     request.session.pop(CLAVE_ENROLANDO, None)
     login(request, usuario, backend='django.contrib.auth.backends.ModelBackend')  # rota la sesion
+    if metodo:
+        auditar(request, RegistroAuditoria.Accion.INGRESO, actor=usuario, objetivo=usuario, detalle=metodo)
 
 
 def _error_json(texto, estado=400):
@@ -54,9 +64,12 @@ def ingresar(request):
     if request.user.is_authenticated:
         return redirect(_destino(request.user))
     form = IngresoRutForm(request.POST or None)
-    if request.method == 'POST' and form.is_valid():
+    if request.method == 'POST' and limite_intentos.origen_bloqueado(request):
+        form.add_error(None, limite_intentos.AVISO_ORIGEN)  # DEF-08
+    elif request.method == 'POST' and form.is_valid():
         usuario = passkeys.usuario_por_rut(form.cleaned_data['rut'], TIPOS_CON_INGRESO)
         if usuario is None:
+            limite_intentos.registrar_rut_no_encontrado(request)  # DEF-08
             # Mensaje generico: no revela si el RUT existe (OWASP A07)
             form.add_error('rut', 'No encontramos una inscripción activa con ese RUT. '
                                   'Acércate al SOME para inscribirte.')
@@ -78,7 +91,7 @@ def verificar(request):
         # Boton "entrar sin huella": SOLO en modo demostracion
         if not passkeys.modo_demo_permitido(request):
             raise Http404
-        _iniciar_sesion(request, usuario)
+        _iniciar_sesion(request, usuario, METODO_DEMO)
         return redirect(_destino(usuario))
     return render(request, 'autenticacionApp/verificar.html', {
         'usuario': usuario,
@@ -93,6 +106,8 @@ def passkey_ingreso_opciones(request):
     usuario = _usuario_pendiente(request)
     if usuario is None or not passkeys.passkeys_del_dominio(request, usuario).exists():
         return _error_json('Primero escribe tu RUT.', 403)
+    if limite_intentos.rut_bloqueado(usuario):
+        return _error_json(limite_intentos.AVISO_RUT, 429)  # DEF-08
     return JsonResponse({'ok': True, 'opciones': passkeys.opciones_ingreso(request, usuario)})
 
 
@@ -101,11 +116,16 @@ def passkey_ingreso_verificar(request):
     usuario = _usuario_pendiente(request)
     if usuario is None:
         return _error_json('Primero escribe tu RUT.', 403)
+    if limite_intentos.rut_bloqueado(usuario):
+        return _error_json(limite_intentos.AVISO_RUT, 429)  # DEF-08
     try:
         passkeys.verificar_ingreso(request, usuario, request.body.decode())
     except passkeys.PasskeyError as error:
+        if limite_intentos.registrar_huella_rechazada(request, usuario):
+            return _error_json(limite_intentos.AVISO_RUT, 429)
         return _error_json(str(error))
-    _iniciar_sesion(request, usuario)
+    limite_intentos.ingreso_correcto(usuario)
+    _iniciar_sesion(request, usuario, METODO_PASSKEY)
     return JsonResponse({'ok': True, 'destino': reverse(_destino(usuario))})
 
 
@@ -114,10 +134,13 @@ def passkey_ingreso_verificar(request):
 def enrolar(request):
     """Paso 1: RUT + codigo de un solo uso entregado por el SOME."""
     form = EnrolamientoForm(request.POST or None)
-    if request.method == 'POST' and form.is_valid():
+    if request.method == 'POST' and limite_intentos.origen_bloqueado(request):
+        form.add_error(None, limite_intentos.AVISO_ORIGEN)  # DEF-08
+    elif request.method == 'POST' and form.is_valid():
         usuario = passkeys.usuario_por_rut(form.cleaned_data['rut'], TIPOS_CON_INGRESO)
         try:
             if usuario is None:
+                limite_intentos.registrar_rut_no_encontrado(request)  # DEF-08
                 raise passkeys.PasskeyError('El código no es válido o ya venció. Pide uno nuevo en el SOME.')
             codigo = passkeys.validar_codigo(usuario, form.cleaned_data['codigo'])
         except passkeys.PasskeyError as error:
@@ -168,7 +191,7 @@ def passkey_registro_verificar(request):
         return _error_json(str(error))
     codigo.usado_en = timezone.now()  # el codigo ya no sirve otra vez
     codigo.save(update_fields=['usado_en'])
-    _iniciar_sesion(request, codigo.usuario)
+    _iniciar_sesion(request, codigo.usuario, METODO_ENROLAMIENTO)
     messages.success(request, '¡Listo! Desde ahora entras con tu huella, tu rostro o el PIN de tu dispositivo.')
     return JsonResponse({'ok': True, 'destino': reverse(_destino(codigo.usuario))})
 
@@ -215,6 +238,8 @@ def elegir_paciente(request):
         elegido = a_cargo.filter(pk=request.POST.get('paciente')).first()
         if elegido:
             request.session[CLAVE_PACIENTE] = str(elegido.pk)
+            auditar(request, RegistroAuditoria.Accion.TUTOR_ACTUA, objetivo=elegido.usuario,
+                    detalle='Desde ahora pide y cancela horas a nombre de este paciente')
             return redirect('mi_inicio')
         messages.error(request, 'Elige a una de las personas que tienes a cargo.')
     return render(request, 'autenticacionApp/elegir_paciente.html', {'a_cargo': a_cargo})
@@ -222,6 +247,8 @@ def elegir_paciente(request):
 
 @require_POST
 def salir(request):
+    if request.user.is_authenticated:
+        auditar(request, RegistroAuditoria.Accion.SALIDA, objetivo=request.user)
     logout(request)  # borra la sesion completa
     messages.info(request, 'Cerraste tu sesión de forma segura.')
     respuesta = redirect('inicio')

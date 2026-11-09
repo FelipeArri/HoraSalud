@@ -17,11 +17,12 @@
   <span class="flecha">{% include 'componentes/icono.html' with n='flecha' %}</span>
 </a>
 {% else %}
-<div class="tarjeta-accion mb-3 opacity-75" style="cursor:default">
+<a class="tarjeta-accion mb-3" href="{% url 'pedir_bloque' t.especialidad.pk %}">
   <span class="icono-caja rojo">{% include 'agendaApp/_icono_especialidad.html' with nombre=t.especialidad.nombre %}</span>
   <span>
     <span class="titulo">{{ t.especialidad.nombre }}</span>
-    <span class="detalle">Sin horas disponibles por ahora. Pregunta en el SOME por la lista de espera.</span>
+    <span class="detalle">Sin horas disponibles por ahora. Toca aquí para entrar a la lista de espera.</span>
   </span>
-</div>
+  <span class="flecha">{% include 'componentes/icono.html' with n='flecha' %}</span>
+</a>
 {% endif %}

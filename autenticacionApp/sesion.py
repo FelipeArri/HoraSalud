@@ -7,6 +7,7 @@ Quien esta usando el sistema y por quien actua (RN-07: cada rol ve solo lo suyo)
 """
 from functools import wraps
 
+from django.conf import settings
 from django.contrib import messages
 from django.shortcuts import redirect
 
@@ -97,4 +98,5 @@ def contexto_sesion(request):
         'es_some': es_some(usuario),
         'es_admin_cesfam': es_admin_cesfam(usuario),
         'es_profesional': es_profesional(usuario),
+        'vapid_publica': getattr(settings, 'VAPID_PUBLIC_KEY', ''),  # B-14: avisos push
     }

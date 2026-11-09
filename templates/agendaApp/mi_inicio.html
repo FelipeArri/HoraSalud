@@ -21,6 +21,27 @@
   </div>
   {% endif %}
 
+  {% for o in ofertas %}{# B-14: cupo ofrecido por la lista de espera #}
+  <a class="aviso-oferta mb-3" href="{% url 'oferta_cupo' o.pk %}">
+    <span class="icono-caja">{% include 'componentes/icono.html' with n='reloj' %}</span>
+    <span class="flex-fill">
+      <span class="titulo">¡Se liberó una hora para ti!</span>
+      <span class="detalle">{{ o.cupo.bloque.agenda.especialidad }} · <span class="capital">{{ o.cupo.bloque.agenda.fecha|date:"l j \d\e F" }}</span> a las {{ o.cupo.bloque.hora_inicio|time:"H:i" }}.
+        Responde antes de las {{ o.vence_en|time:"H:i" }}.</span>
+    </span>
+    <span class="btn btn-verde">Ver</span>
+  </a>
+  {% endfor %}
+
+  {% if manana %}{# B-23: recordatorio también dentro de la app #}
+  <div class="alert alert-info d-flex gap-2 align-items-start" role="alert">
+    {% include 'componentes/icono.html' with n='reloj' %}
+    <div><strong>Mañana tienes hora a las {{ manana.bloque.hora_inicio|time:"H:i" }}.</strong>
+      {% if manana.estado == 'reservada' %}Confírmala si vas a ir, o cancélala para que otra persona la use.{% else %}Si no puedes ir, cancélala para que otra persona la use.{% endif %}
+      <a href="{% url 'mis_horas' %}" class="fw-semibold">Ver mis horas</a></div>
+  </div>
+  {% endif %}
+
   {% for h in suspendidas %}
   <div class="alert alert-danger d-flex gap-2 align-items-start" role="alert">
     {% include 'componentes/icono.html' with n='calendario' %}
@@ -86,6 +107,13 @@
         <span class="flecha">{% include 'componentes/icono.html' with n='flecha' %}</span>
       </a>
     </div>
+    <div class="col-12 col-md-6">
+      <a class="tarjeta-accion h-100" href="{% url 'mi_lista_espera' %}">
+        <span class="icono-caja azul">{% include 'componentes/icono.html' with n='reloj' %}</span>
+        <span><span class="titulo">Lista de espera</span><span class="detalle">{% if en_espera %}Estás en {{ en_espera }} lista{{ en_espera|pluralize:"s" }} de espera{% else %}Te avisamos si se libera una hora{% endif %}</span></span>
+        <span class="flecha">{% include 'componentes/icono.html' with n='flecha' %}</span>
+      </a>
+    </div>
     {% if es_tutor %}
     <div class="col-12 col-md-6">
       <a class="tarjeta-accion h-100" href="{% url 'elegir_paciente' %}">
@@ -96,5 +124,8 @@
     </div>
     {% endif %}
   </div>
+
+  <div class="mt-4">{% include 'componentes/app_avisos.html' %}</div>
+  <p class="text-center small mt-3"><a href="{% url 'ayuda' %}">¿Cómo funciona HoraSalud?</a></p>
 </div>
 {% endblock %}

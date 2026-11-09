@@ -5,6 +5,7 @@ Todas las credenciales se leen del archivo .env, que nunca se sube a Git
 (RNF-SEC02). Ver .env.example para la lista de variables.
 """
 import os
+import sys
 from datetime import timedelta
 from pathlib import Path
 
@@ -38,6 +39,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # B-16: estilos e imágenes sin depender de DEBUG
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -45,6 +47,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'proyectoHoraSalud.middleware.SinCacheParaSesionMiddleware',  # DEF-03
+    'proyectoHoraSalud.middleware.CabecerasSegurasApiMiddleware',  # DEF-10 (CP-31)
+    'listaEsperaApp.middleware.ProcesarListaEsperaMiddleware',  # B-14 (RF-06)
 ]
 
 ROOT_URLCONF = 'proyectoHoraSalud.urls'
@@ -131,6 +135,13 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+# B-16: en producción whitenoise sirve los archivos estáticos comprimidos y con versión en el nombre
+# (el navegador nunca usa una copia vieja). En desarrollo y en las pruebas se usa lo normal de Django.
+if not DEBUG and 'test' not in sys.argv:
+    STORAGES = {
+        'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+        'staticfiles': {'BACKEND': 'proyectoHoraSalud.almacen_estaticos.AlmacenEstaticos'},
+    }
 REPORTES_DIR = BASE_DIR / 'reportes'  # Excel generados (fuera de Git)  # destino de collectstatic (D33-C07)
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -187,6 +198,17 @@ if not HORASALUD_CLAVE_CIFRADO and not DEBUG:
 # Ingreso sin huella (modo demostracion). Solo con DEBUG y SOLO desde
 # localhost: nunca desde el dominio publico del tunel (ver autenticacionApp.passkeys).
 HORASALUD_INGRESO_DEMO = DEBUG and os.getenv('HORASALUD_INGRESO_DEMO', 'True') == 'True'
+# B-14: avisos push (Web Push) gratuitos. Las claves se generan una vez con
+#   python manage.py generar_claves_push
+# Sin ellas la app funciona igual, pero los avisos solo se ven al entrar a HoraSalud.
+VAPID_PUBLIC_KEY = os.getenv('VAPID_PUBLIC_KEY', '')
+VAPID_PRIVATE_KEY = os.getenv('VAPID_PRIVATE_KEY', '')
+VAPID_CONTACTO = os.getenv('VAPID_CONTACTO', 'mailto:contacto@horasalud.cl')
+# B-14 y B-23: con las visitas (como máximo cada 30 s) se vencen las ofertas de la lista de espera
+# y se envían los recordatorios de mañana. En el servidor real, además, se deja corriendo:
+#   python manage.py tareas_horasalud --cada 60
+HORASALUD_LISTA_ESPERA_AUTOMATICA = True
+
 X_FRAME_OPTIONS = 'DENY'
 SECURE_CONTENT_TYPE_NOSNIFF = True
 if not DEBUG:

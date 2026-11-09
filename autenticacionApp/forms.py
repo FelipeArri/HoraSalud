@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 
 from agendaApp.models import Especialidad
 
-from .models import Usuario
+from .models import Sector, Usuario
 from .validators import normalizar_rut, validar_rut
 
 
@@ -35,6 +35,24 @@ class IngresoPersonalForm(IngresoRutForm):
         'autocomplete': 'current-password', 'class': 'form-control form-control-lg'}))
 
 
+class TutorForm(IngresoRutForm):
+    """B-10 · RF-03: RUT y nombre de la persona que será tutor."""
+
+    nombres = forms.CharField(label='Nombres', max_length=150, required=False,
+                              widget=forms.TextInput(attrs={'class': 'form-control', 'autocomplete': 'off'}))
+    apellidos = forms.CharField(label='Apellidos', max_length=150, required=False,
+                                widget=forms.TextInput(attrs={'class': 'form-control', 'autocomplete': 'off'}))
+    confirmo = forms.BooleanField(
+        label='Entiendo que esta persona podrá pedir y cancelar horas por mí.',
+        error_messages={'required': 'Confirma que autorizas a esta persona.'})
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['rut'].label = 'RUT del tutor'
+        self.fields['rut'].widget.attrs['autocomplete'] = 'off'
+        self.fields['rut'].widget.attrs.pop('autofocus', None)
+
+
 class FuncionarioForm(IngresoRutForm):
     """B-20: el Administrador CESFAM agrega a un funcionario (y confirma con SU clave)."""
 
@@ -48,6 +66,9 @@ class FuncionarioForm(IngresoRutForm):
                                           queryset=Especialidad.objects.order_by('nombre'),
                                           empty_label='— (solo para profesionales) —')
     box = forms.CharField(label='Box de atención', max_length=10, required=False)
+    sector = forms.ModelChoiceField(label='Sector que atiende', required=False,
+                                    queryset=Sector.objects.order_by('nombre'),
+                                    empty_label='Todos los sectores')  # DEF-06
     email = forms.EmailField(label='Correo (opcional)', required=False)
     clave_admin = forms.CharField(label='Tu clave de administrador', strip=False,
                                   widget=forms.PasswordInput(attrs={'autocomplete': 'current-password'}))
@@ -58,7 +79,7 @@ class FuncionarioForm(IngresoRutForm):
         self.fields['rut'].widget.attrs['class'] = 'form-control campo-rut'
         for nombre, campo in self.fields.items():
             if nombre != 'rut':
-                campo.widget.attrs.setdefault('class', 'form-select' if nombre in ('tipo', 'especialidad')
+                campo.widget.attrs.setdefault('class', 'form-select' if nombre in ('tipo', 'especialidad', 'sector')
                                               else 'form-control')
 
     def clean(self):

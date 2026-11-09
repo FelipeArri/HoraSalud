@@ -91,6 +91,9 @@ class Profesional(models.Model):
     usuario = models.OneToOneField(Usuario, on_delete=models.CASCADE, primary_key=True, related_name='profesional')
     especialidad = models.ForeignKey('agendaApp.Especialidad', on_delete=models.PROTECT, null=True, blank=True)
     box_atencion = models.CharField(max_length=10, blank=True)
+    # DEF-06 (RF-02): sector que atiende. Vacío = atiende a todos los sectores (por ejemplo, los programas).
+    sector = models.ForeignKey(Sector, on_delete=models.PROTECT, null=True, blank=True,
+                               help_text='Déjalo vacío si atiende a pacientes de todos los sectores.')
 
     class Meta:
         verbose_name_plural = 'Profesionales'
@@ -170,8 +173,9 @@ class Consentimiento(models.Model):
 
 class RegistroAuditoria(models.Model):
     """
-    B-20 · RN-11: quién hizo qué y cuándo con las cuentas del personal. No se edita
-    ni se borra desde la app. Guarda el RUT aparte por si la cuenta se desactiva.
+    B-20 · RN-11: quién hizo qué y cuándo. Cubre las acciones del personal y, desde
+    DEF-07, la reserva, la cancelación y el No-Show. No se edita ni se borra desde la
+    app. Guarda el RUT aparte por si la cuenta se desactiva.
     """
 
     class Accion(models.TextChoices):
@@ -190,19 +194,43 @@ class RegistroAuditoria(models.Model):
         AUSENCIA = 'ausencia', 'Registró ausencia de profesional'
         SOBRECUPO = 'sobrecupo', 'Dio hora en ventanilla / sobrecupo'
         PROXIMO_CONTROL = 'proximo_control', 'Agendó o indicó próximo control'
+        # DEF-07 · horas de los pacientes
+        RESERVA = 'reserva', 'Reservó una hora'
+        CANCELACION = 'cancelacion', 'Canceló una hora'
+        NO_SHOW = 'no_show', 'Marcó inasistencia (No-Show)'
+        ATENDIDA = 'atendida', 'Marcó hora atendida'
+        # DEF-08 · ingreso de pacientes y tutores
+        INGRESO_BLOQUEADO = 'ingreso_bloqueado', 'Ingreso bloqueado por intentos'
+        # B-10 · vínculo de tutor (RF-03)
+        TUTOR_AUTORIZADO = 'tutor_autorizado', 'Autorizó un tutor'
+        TUTOR_REVOCADO = 'tutor_revocado', 'Quitó un tutor'
+        TUTOR_ACTUA = 'tutor_actua', 'Tutor eligió actuar por un paciente'
+        # Trazabilidad de sesiones de todos los roles
+        SALIDA = 'salida', 'Cerró sesión'
+        # B-14 · lista de espera (RF-06)
+        ESPERA_ALTA = 'espera_alta', 'Inscribió en lista de espera'
+        ESPERA_BAJA = 'espera_baja', 'Sacó de la lista de espera'
+        CUPO_ACEPTADO = 'cupo_aceptado', 'Aceptó un cupo de la lista de espera'
+        # CC-19 · segundo factor del personal
+        MFA_QUITADO = 'mfa_quitado', 'Quitó los dispositivos de segundo factor'
 
     fecha = models.DateTimeField(auto_now_add=True)
     actor = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
     actor_rut = models.CharField('RUT de quien actúa', max_length=12, blank=True)
+    # Rol al momento del evento (se guarda como texto: si después cambia, el registro no cambia)
+    actor_rol = models.CharField('rol de quien actúa', max_length=30, blank=True)
     accion = models.CharField(max_length=20, choices=Accion.choices)
     objetivo = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
     objetivo_rut = models.CharField('RUT afectado', max_length=12, blank=True)
+    objetivo_rol = models.CharField('rol de la persona afectada', max_length=30, blank=True)
     detalle = models.CharField(max_length=200, blank=True)
+    # Frase completa: quién (rol, nombre, RUT), qué hizo, sobre quién y el detalle
+    descripcion = models.CharField('descripción', max_length=400, blank=True)
     ip = models.GenericIPAddressField(null=True, blank=True)
 
     class Meta:
         verbose_name = 'registro de auditoría'
-        verbose_name_plural = 'Registro de auditoría (personal)'
+        verbose_name_plural = 'Registro de auditoría'
         ordering = ['-fecha']
 
     def __str__(self):

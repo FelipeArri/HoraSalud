@@ -29,8 +29,8 @@ class PacienteAdmin(admin.ModelAdmin):
 
 @admin.register(Profesional)
 class ProfesionalAdmin(admin.ModelAdmin):
-    list_display = ('usuario', 'especialidad', 'box_atencion')
-    list_filter = ('especialidad',)
+    list_display = ('usuario', 'especialidad', 'sector', 'box_atencion')
+    list_filter = ('especialidad', 'sector')
 
 
 @admin.register(CredencialPasskey)
@@ -74,9 +74,9 @@ class SolicitudDerechosAdmin(admin.ModelAdmin):
 @admin.register(RegistroAuditoria)
 class RegistroAuditoriaAdmin(admin.ModelAdmin):
     """B-20 · RN-11: solo lectura."""
-    list_display = ('fecha', 'actor_rut', 'accion', 'objetivo_rut', 'detalle', 'ip')
-    list_filter = ('accion',)
-    search_fields = ('actor_rut', 'objetivo_rut')
+    list_display = ('fecha', 'actor_rol', 'actor_rut', 'accion', 'objetivo_rol', 'objetivo_rut', 'descripcion', 'ip')
+    list_filter = ('accion', 'actor_rol')
+    search_fields = ('actor_rut', 'objetivo_rut', 'descripcion')
 
     def has_add_permission(self, request):
         return False

@@ -20,10 +20,12 @@ from datetime import timedelta
 from django.db import transaction
 from django.utils import timezone
 
-from autenticacionApp.adapter_inscripcion import PrevisionService, servicios_externos
-from autenticacionApp.models import Paciente
+from autenticacionApp.adapter_inscripcion import PrevisionService, ServicioExternoNoDisponible, servicios_externos
+from autenticacionApp.models import Paciente, RegistroAuditoria
+from autenticacionApp.personal import auditar
 from notificacionesApp.models import RegistroNotificacion
 
+from .eventos import cupo_liberado
 from .models import Hora
 
 VIGENCIA_CONSULTA = timedelta(days=30)
@@ -62,6 +64,10 @@ def dejar_no_vigente(paciente, prevision):
         hora.motivo_cancelacion = f'CESFAM: cambio de previsión ({NOMBRES.get(prevision, prevision)})'
         hora.save()  # Hora.save() libera el bloque (DEF-01)
         RegistroNotificacion.objects.create(hora=hora, canal=RegistroNotificacion.Canal.APP)  # aviso RN-13
+        auditar(None, RegistroAuditoria.Accion.CANCELACION, objetivo=paciente.usuario,
+                detalle=f'Sistema (RN-16) · {hora.bloque.agenda.especialidad} · '
+                        f'{hora.bloque.agenda.fecha:%d-%m-%Y} {hora.bloque.hora_inicio:%H:%M}')  # DEF-07
+        cupo_liberado.send(sender=Hora, bloque=hora.bloque, motivo='cancelacion')  # B-14 (Observer)
         canceladas += 1
     return canceladas
 
@@ -73,7 +79,12 @@ def revalidar(paciente, servicios=None, forzar=False):
     if not forzar and not consulta_vencida(paciente):
         return Resultado(consultado=False)
     _, fonasa = servicios or servicios_externos()
-    datos = fonasa.consultar_prevision(paciente.usuario.rut)
+    try:
+        datos = fonasa.consultar_prevision(paciente.usuario.rut)
+    except ServicioExternoNoDisponible:
+        # DEF-09: FONASA caído no deja al paciente sin atención. Se mantiene el último estado conocido
+        # (vigente) y no se actualiza la fecha, para volver a consultar en la próxima reserva.
+        return Resultado(consultado=False)
     paciente.prevision_consultada_en = timezone.now()
     if datos['prevision'] == PrevisionService.FONASA:
         paciente.tramo = datos['tramo']

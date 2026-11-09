@@ -1,7 +1,8 @@
 """
 B-20 · Personal del CESFAM: ingreso con RUT + clave, administrador CESFAM y auditoría (RN-11).
 
-- El personal (SOME, profesionales y Administrador CESFAM) entra con RUT + clave.
+- El personal (SOME, profesionales y Administrador CESFAM) entra con RUT + clave
+  y luego confirma con su passkey (segundo factor, CC-19: ver segundo_factor.py).
 - 5 claves incorrectas seguidas bloquean la cuenta 15 minutos (OWASP A07).
 - Para agregar, desactivar o dar clave temporal, el administrador vuelve a escribir
   SU clave. Si se equivoca 3 veces, se le cierra la sesión.
@@ -14,6 +15,7 @@ from django.contrib.auth import logout
 from django.db import transaction
 from django.utils import timezone
 
+from .auditoria_texto import armar_descripcion
 from .models import Profesional, RegistroAuditoria, Usuario
 
 MAX_INTENTOS_INGRESO = 5
@@ -31,12 +33,23 @@ def _ip(request):
     return request.META.get('REMOTE_ADDR') if request else None
 
 
+def _rol(usuario):
+    return usuario.get_tipo_usuario_display() if usuario else ''
+
+
 def auditar(request, accion, actor=None, objetivo=None, detalle=''):
+    """Guarda quién (con su rol), qué, sobre quién y una descripción legible (RN-11)."""
     actor = actor or (request.user if request and request.user.is_authenticated else None)
+    actor_rut, objetivo_rut = getattr(actor, 'rut', '') or '', getattr(objetivo, 'rut', '') or ''
+    detalle = detalle[:200]
+    descripcion = armar_descripcion(
+        RegistroAuditoria.Accion(accion).label,
+        _rol(actor), actor.get_full_name() if actor else '', actor_rut,
+        _rol(objetivo), objetivo.get_full_name() if objetivo else '', objetivo_rut, detalle)
     return RegistroAuditoria.objects.create(
-        actor=actor, actor_rut=getattr(actor, 'rut', '') or '', accion=accion,
-        objetivo=objetivo, objetivo_rut=getattr(objetivo, 'rut', '') or '',
-        detalle=detalle[:200], ip=_ip(request))
+        actor=actor, actor_rut=actor_rut, actor_rol=_rol(actor), accion=accion,
+        objetivo=objetivo, objetivo_rut=objetivo_rut, objetivo_rol=_rol(objetivo),
+        detalle=detalle, descripcion=descripcion, ip=_ip(request))
 
 
 def generar_clave(largo=12):
@@ -119,7 +132,7 @@ def funcionarios():
 
 
 @transaction.atomic
-def crear_funcionario(request, *, rut, nombres, apellidos, tipo, especialidad=None, box='', email=''):
+def crear_funcionario(request, *, rut, nombres, apellidos, tipo, especialidad=None, box='', email='', sector=None):
     """Crea la cuenta con una clave temporal que se entrega en persona. Devuelve (usuario, clave)."""
     if Usuario.objects.filter(rut=rut).exists():
         raise PersonalError('Ese RUT ya tiene una cuenta en HoraSalud.')
@@ -129,7 +142,7 @@ def crear_funcionario(request, *, rut, nombres, apellidos, tipo, especialidad=No
     usuario.set_password(clave)
     usuario.save()
     if tipo == Usuario.Tipo.PROFESIONAL:
-        Profesional.objects.create(usuario=usuario, especialidad=especialidad, box_atencion=box)
+        Profesional.objects.create(usuario=usuario, especialidad=especialidad, box_atencion=box, sector=sector)
     auditar(request, RegistroAuditoria.Accion.ALTA, objetivo=usuario,
             detalle=f'{usuario.get_tipo_usuario_display()}' + (f' · {especialidad}' if especialidad else ''))
     return usuario, clave
@@ -169,3 +182,11 @@ def horas_futuras_del_profesional(funcionario):
     return Hora.objects.filter(bloque__agenda__profesional__usuario=funcionario,
                                bloque__agenda__fecha__gte=timezone.localdate(),
                                estado__in=[Hora.Estado.RESERVADA, Hora.Estado.CONFIRMADA]).count()
+
+
+def quitar_dispositivos(request, funcionario, motivo=''):
+    """CC-19: teléfono o PC perdido. Borra sus passkeys; con una clave temporal registra uno nuevo."""
+    cantidad, _ = funcionario.passkeys.all().delete()
+    auditar(request, RegistroAuditoria.Accion.MFA_QUITADO, objetivo=funcionario,
+            detalle=(motivo or f'{cantidad} dispositivo(s)'))
+    return cantidad

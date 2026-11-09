@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Segundo factor{% endblock %}
+
+{% block content %}
+<div class="angosto">
+  <a class="volver" href="{% url 'personal_ingresar' %}">{% include 'componentes/icono.html' with n='atras' %}Volver</a>
+
+  <div class="tarjeta p-4 text-center">
+    {% csrf_token %}
+    <div class="huella">{% include 'componentes/icono.html' with n='huella' %}</div>
+    <div class="etiqueta-seccion">Paso 2 de 2 · Segundo factor</div>
+    <h1 class="h2 mb-1">Hola, {{ usuario.first_name }}</h1>
+
+    {% if tiene_passkey %}
+      <p class="texto-suave">Tu clave es correcta. Ahora confirma que eres tú con la huella, el rostro o el PIN de tu dispositivo.</p>
+      <button type="button" id="boton-mfa" class="btn btn-verde btn-lg w-100">Confirmar con mi dispositivo</button>
+      <div id="estado-mfa" role="status" aria-live="polite"></div>
+      {% if puede_registrar %}
+        <p class="texto-suave small mt-3 mb-2">¿Cambiaste de teléfono o de PC?</p>
+        <button type="button" id="boton-mfa-nuevo" class="btn btn-borde w-100">Registrar este dispositivo</button>
+        <div id="estado-mfa-nuevo" role="status" aria-live="polite"></div>
+      {% endif %}
+    {% elif puede_registrar %}
+      <p class="texto-suave">Para proteger los datos de los pacientes, el personal entra con <strong>dos factores</strong>:
+        tu clave y este dispositivo. Regístralo una sola vez.</p>
+      <button type="button" id="boton-mfa-nuevo" class="btn btn-verde btn-lg w-100">Registrar este dispositivo</button>
+      <div id="estado-mfa-nuevo" role="status" aria-live="polite"></div>
+    {% else %}
+      <p class="texto-suave">Tu cuenta aún no tiene un dispositivo registrado como segundo factor.</p>
+      <div class="alert alert-warning text-start">Pide al <strong>Administrador CESFAM</strong> una clave temporal.
+        Con ella podrás registrar tu dispositivo.</div>
+    {% endif %}
+
+    {% if modo_demo %}
+      <form method="post" class="mt-3">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-borde w-100">Entrar sin segundo factor (modo demostración)</button>
+      </form>
+      <div class="aviso-demo mt-3 text-start">
+        <strong>Modo demostración.</strong> Existe solo en el prototipo local y queda registrado en la auditoría.
+        Se apaga junto con <code>DJANGO_DEBUG</code> y nunca aparece desde internet.
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="tarjeta mt-3 d-flex gap-3 align-items-center">
+    <span class="icono-caja azul">{% include 'componentes/icono.html' with n='escudo' %}</span>
+    <div class="texto-suave small">
+      HoraSalud no recibe tu huella ni tu PIN: tu dispositivo solo firma un número aleatorio y el servidor
+      revisa la firma. Cada ingreso queda registrado.
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/passkeys.js' %}"></script>
+<script>
+  {% if tiene_passkey %}
+  HoraSaludPasskey.conectar({
+    boton: 'boton-mfa', estado: 'estado-mfa', rpId: '{{ rp_id|escapejs }}',
+    accion: HoraSaludPasskey.ingresar,
+    urls: { opciones: '{% url "mfa_ingreso_opciones" %}', verificar: '{% url "mfa_ingreso_verificar" %}' }
+  });
+  {% endif %}
+  {% if puede_registrar %}
+  HoraSaludPasskey.conectar({
+    boton: 'boton-mfa-nuevo', estado: 'estado-mfa-nuevo', rpId: '{{ rp_id|escapejs }}',
+    accion: HoraSaludPasskey.registrar,
+    urls: { opciones: '{% url "mfa_registro_opciones" %}', verificar: '{% url "mfa_registro_verificar" %}' }
+  });
+  {% endif %}
+</script>
+{% endblock %}

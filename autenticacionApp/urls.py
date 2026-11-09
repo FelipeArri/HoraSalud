@@ -3,8 +3,14 @@ from django.urls import path
 from . import views, views_personal as personal, views_privacidad as privacidad
 
 urlpatterns = [
-    # Personal del CESFAM (B-20): RUT + clave
+    # Personal del CESFAM (B-20): RUT + clave + segundo factor (CC-19)
     path('personal/ingresar/', personal.ingresar, name='personal_ingresar'),
+    # CC-19: segundo factor (passkey) después de la clave
+    path('personal/segundo-factor/', personal.segundo_factor_vista, name='personal_segundo_factor'),
+    path('personal/mfa/ingreso/opciones/', personal.mfa_ingreso_opciones, name='mfa_ingreso_opciones'),
+    path('personal/mfa/ingreso/verificar/', personal.mfa_ingreso_verificar, name='mfa_ingreso_verificar'),
+    path('personal/mfa/registro/opciones/', personal.mfa_registro_opciones, name='mfa_registro_opciones'),
+    path('personal/mfa/registro/verificar/', personal.mfa_registro_verificar, name='mfa_registro_verificar'),
     path('personal/cambiar-clave/', personal.cambiar_clave, name='personal_cambiar_clave'),
     path('personal/funcionarios/', personal.funcionarios, name='personal_funcionarios'),
     path('personal/funcionarios/nuevo/', personal.funcionario_nuevo, name='personal_funcionario_nuevo'),
@@ -34,5 +40,8 @@ urlpatterns = [
     path('mis-datos/dispositivo/<int:passkey_id>/borrar/', privacidad.borrar_dispositivo, name='borrar_dispositivo'),
     path('mis-datos/solicitud/', privacidad.solicitar_derecho, name='solicitar_derecho'),
     path('mis-datos/retirar/', privacidad.retirar_consentimiento, name='retirar_consentimiento'),
+    path('mis-datos/tutor/autorizar/', privacidad.autorizar_tutor, name='autorizar_tutor'),
+    path('mis-datos/tutor/quitar/', privacidad.quitar_tutor, name='quitar_tutor'),
+    path('some/tutores/', privacidad.some_tutores, name='some_tutores'),
     path('some/solicitudes/', privacidad.some_solicitudes, name='some_solicitudes'),
 ]

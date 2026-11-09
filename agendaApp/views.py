@@ -13,10 +13,13 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from autenticacionApp.adapter_inscripcion import ServicioExternoNoDisponible
 from autenticacionApp.models import Paciente
 from autenticacionApp.sesion import requiere_paciente, requiere_some
 
-from . import gestion_agendas, prevision, servicios
+from listaEsperaApp import servicios as lista_espera
+
+from . import gestion_agendas, prevision, recordatorios, servicios
 from .estados_hora import TransicionInvalida
 from .models import Agenda, BloqueHorario, Especialidad, Hora
 
@@ -44,7 +47,16 @@ def mi_inicio(request):
         'cantidad_vigentes': vigentes.count(),
         'suspendidas': gestion_agendas.horas_suspendidas_sin_reagendar(request.paciente),  # B-21 · RN-13
         'indicaciones': gestion_agendas.indicaciones_pendientes(request.paciente),  # P-10
+        'ofertas': lista_espera.ofertas_pendientes(request.paciente),  # B-14: cupo ofrecido
+        'en_espera': request.paciente.esperas.count(),
+        'manana': recordatorios.recordatorio_de_manana(request.paciente),  # B-23
     })
+
+
+def ayuda(request):
+    """B-14: cómo funciona HoraSalud (lista de espera, avisos, instalar la app, tutor)."""
+    from listaEsperaApp.views import _reglas
+    return render(request, 'agendaApp/ayuda.html', {'reglas': _reglas()})
 
 
 @requiere_paciente
@@ -55,7 +67,7 @@ def pedir_especialidad(request):
     vigentes = {h.bloque.agenda.especialidad_id: h for h in servicios.horas_vigentes(request.paciente)}
     tarjetas = []
     for especialidad in Especialidad.objects.order_by('tipo', 'nombre'):
-        libres = servicios.bloques_reservables(especialidad)
+        libres = servicios.bloques_reservables(especialidad, request.paciente)
         tarjetas.append({'especialidad': especialidad, 'proximo': libres[0] if libres else None,
                          'cantidad': len(libres), 'vigente': vigentes.get(especialidad.pk)})
     return render(request, 'agendaApp/pedir_especialidad.html', {
@@ -70,7 +82,7 @@ def pedir_especialidad(request):
 def pedir_bloque(request, especialidad_id):
     """Paso 2 de 3: elegir dia y hora."""
     especialidad = get_object_or_404(Especialidad, pk=especialidad_id)
-    libres = servicios.bloques_reservables(especialidad)
+    libres = servicios.bloques_reservables(especialidad, request.paciente)
     dias = OrderedDict()
     for bloque in libres:
         dias.setdefault(bloque.agenda.fecha, []).append(bloque)
@@ -81,9 +93,13 @@ def pedir_bloque(request, especialidad_id):
         dia_elegido = None
     if dia_elegido not in dias:
         dia_elegido = next(iter(dias), None)
+    espera = request.paciente.esperas.filter(especialidad=especialidad).first()  # B-14
     return render(request, 'agendaApp/pedir_bloque.html', {
         'especialidad': especialidad, 'dias': list(dias), 'dia_elegido': dia_elegido,
         'bloques': dias.get(dia_elegido, []), 'paso': 2,
+        'espera': espera, 'lugar': lista_espera.posicion(espera) if espera else None,
+        'tiene_hora': servicios.horas_vigentes(request.paciente).filter(
+            bloque__agenda__especialidad=especialidad).exists(),
     })
 
 
@@ -95,7 +111,7 @@ def pedir_confirmar(request, bloque_id):
         'agenda__especialidad', 'agenda__profesional__usuario'), pk=bloque_id)
     if request.method == 'POST':
         try:
-            hora = servicios.reservar_hora(request.paciente, bloque.pk)
+            hora = servicios.reservar_hora(request.paciente, bloque.pk, request=request)
         except servicios.ReglaNegocioError as error:
             messages.error(request, str(error))
             return redirect('pedir_bloque', especialidad_id=bloque.agenda.especialidad_id)
@@ -132,7 +148,7 @@ def cancelar(request, hora_id):
     if request.method == 'POST':
         quien = 'Tutor' if request.user.tipo_usuario == 'tutor' else 'Paciente'
         try:
-            servicios.cancelar_hora(hora, request.POST.get('motivo', ''), quien=quien)
+            servicios.cancelar_hora(hora, request.POST.get('motivo', ''), quien=quien, request=request)
         except servicios.ReglaNegocioError as error:
             messages.error(request, str(error))
         else:
@@ -190,7 +206,7 @@ def some_accion(request, hora_id, accion):
     if accion not in acciones:
         return redirect('some_nomina')
     try:
-        acciones[accion](hora)
+        acciones[accion](hora, request=request)  # DEF-07: queda en el registro de auditoría
         messages.success(request, f'Hora de las {hora.bloque.hora_inicio:%H:%M} actualizada.')
     except TransicionInvalida as error:
         messages.error(request, str(error))
@@ -203,7 +219,12 @@ def some_no_vigentes(request):
     if request.method == 'POST':
         paciente = get_object_or_404(Paciente, pk=request.POST.get('paciente'),
                                      estado_inscripcion=Paciente.Estado.NO_VIGENTE)
-        if prevision.reactivar(paciente):
+        try:
+            reactivado = prevision.reactivar(paciente)
+        except ServicioExternoNoDisponible as error:  # DEF-09
+            messages.error(request, f'{error} {paciente.usuario.get_full_name()} sigue como No vigente.')
+            return redirect('some_no_vigentes')
+        if reactivado:
             messages.success(request, f'{paciente.usuario.get_full_name()} volvió a FONASA: quedó vigente y ya puede pedir horas.')
         else:
             messages.error(request, f'{paciente.usuario.get_full_name()} sigue con {paciente.get_prevision_display()}: no se puede reactivar.')
@@ -212,6 +233,8 @@ def some_no_vigentes(request):
                  .select_related('usuario', 'sector').order_by('usuario__last_name'))
     # El motivo va cifrado (no se puede filtrar); las cancelaciones por RN-16 son las que generaron un aviso
     from notificacionesApp.models import RegistroNotificacion
-    filas = [{'paciente': p, 'canceladas': RegistroNotificacion.objects.filter(hora__paciente=p).count()}
-             for p in pacientes]
+    # Horas canceladas distintas (B-23: una hora también puede tener su recordatorio registrado)
+    filas = [{'paciente': p, 'canceladas': RegistroNotificacion.objects.filter(
+        hora__paciente=p, hora__estado=Hora.Estado.CANCELADA).values('hora').distinct().count()}
+        for p in pacientes]
     return render(request, 'agendaApp/some_no_vigentes.html', {'filas': filas})
