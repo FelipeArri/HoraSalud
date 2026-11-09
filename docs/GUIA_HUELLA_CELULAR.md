@@ -64,6 +64,46 @@ nadie más puede entrar.
 3. **Celular**: cierra sesión → **Ingresar** → RUT → **Usar mi huella** → huella.
 4. Saca capturas de los pasos 2 y 3 en el celular.
 
+## App instalable y avisos en el celular (B-14 y B-23)
+
+Los avisos push también exigen HTTPS, así que se prueban por el túnel.
+
+1. Una sola vez en el notebook: `python manage.py generar_claves_push` (agrega
+   las claves a `.env`) y reinicia el servidor.
+2. **Celular** (Chrome en Android), con la sesión del paciente iniciada: en
+   **Mi inicio** aparece el panel **"HoraSalud en tu teléfono"**.
+   - **Instalar HoraSalud** → queda el ícono verde en la pantalla de inicio.
+   - Abre HoraSalud **desde el ícono** → **Activar avisos** → **Permitir**.
+   - **Probar aviso** → el teléfono debe sonar y vibrar. Repite con la app cerrada.
+3. **Lista de espera:** inscribe al paciente del celular en una especialidad
+   sin horas; desde otra cuenta cancela una hora de esa especialidad con más de
+   48 h de anticipación → el celular recibe "Se liberó una hora para ti".
+4. **Recordatorio:** con una hora para mañana, entre 08:00 y 20:00, el celular
+   recibe "Recuerda: mañana tienes hora…" (como máximo un minuto después).
+5. Capturas: ícono instalado, aviso en la pantalla bloqueada y pantalla de la oferta.
+
+## Modo producción (para la demostración)
+
+`runserver` es solo para programar. Para la demostración se usa el servidor
+de producción (waitress), que además deja corriendo las tareas automáticas:
+
+1. En `.env`: `DJANGO_DEBUG=False` y el `HORASALUD_DOMINIO_PUBLICO` del túnel.
+2. **Terminal 1:** `python manage.py migrate` (solo si hay migraciones nuevas) y luego:
+
+   ```powershell
+   python servidor.py
+   ```
+
+3. Abre el túnel del puerto 8000 como arriba.
+
+Diferencias con el modo desarrollo:
+- Todo se usa por la **dirección HTTPS del túnel**, también en el notebook:
+  `http://localhost:8000` redirige a HTTPS y no funciona.
+- **No existe el botón "Entrar sin huella"**. El SOME entra por
+  **Ingreso de personal** con RUT y clave (`reportes/cuentas_personal.xlsx`).
+- Los estilos e imágenes se sirven comprimidos y con versión (whitenoise).
+- Para volver a programar: `DJANGO_DEBUG=True` en `.env` y `python manage.py runserver`.
+
 ## Seguridad mientras el túnel está abierto
 
 - El botón **"Entrar sin huella (modo demostración)" no existe** para nada que
@@ -83,3 +123,7 @@ nadie más puede entrar.
 | Pide iniciar sesión de GitHub en el celular | Falta cambiar la visibilidad del puerto a **Público** |
 | "El navegador bloqueó la huella" | Entraste por una dirección distinta a la del `.env` |
 | El celular no ofrece huella | Activa el desbloqueo con huella en el celular y usa Chrome o Safari |
+| No aparece "Instalar HoraSalud" | Ábrela por la dirección HTTPS en Chrome; si ya está instalada, ábrela desde el ícono |
+| "Los avisos están bloqueados" | Ajustes de Chrome → Notificaciones → permitir para la dirección del túnel |
+| "Probar aviso" dice que faltan claves | Ejecuta `python manage.py generar_claves_push` y reinicia |
+| En modo producción la página se ve sin estilos | Reinicia con `python servidor.py` (prepara los estilos al iniciar) |

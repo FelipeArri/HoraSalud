@@ -7,10 +7,19 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from .salud import salud
 
+
+class IconoView(RedirectView):
+    """El navegador pide /favicon.ico por su cuenta: se envía al icono en static.
+    La dirección se calcula en cada visita (B-16: en producción el nombre lleva versión)."""
+    permanent = False
+
+    def get_redirect_url(self, *args, **kwargs):
+        return static('images/favicon.ico')
+
+
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # El navegador pide /favicon.ico por su cuenta: se envía al icono en static
-    path('favicon.ico', RedirectView.as_view(url=static('images/favicon.ico'))),
+    path('favicon.ico', IconoView.as_view()),
     # API
     path('api/salud/', salud, name='api_salud'),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
